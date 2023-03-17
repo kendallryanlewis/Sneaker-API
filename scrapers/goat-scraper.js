@@ -15,8 +15,6 @@ module.exports = {
                 http2: true,
             });
             var json = JSON.parse(response.body);
-            console.log(json);
-            console.log(shoe);
             if (json.results[0].hits[0]) {
                 if (json.results[0].hits[0].lowest_price_cents_usd / 100 != 0) {
                     shoe.lowestResellPrice.goat = json.results[0].hits[0].lowest_price_cents_usd / 100;
@@ -37,6 +35,8 @@ module.exports = {
         } else {
             let apiLink = shoe.resellLinks.goat.replace('sneakers/', 'web-api/v1/product_variants?productTemplateId=');
             let priceMap = {};
+            console.log("Goat resell link -", shoe.resellLinks.goat);
+            console.log("apiLink - ", apiLink);
 
             try {
                 const response = await got(apiLink, {
@@ -48,6 +48,8 @@ module.exports = {
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
+                console.log("json - ", json);
+                console.log("Shoe - ", shoe);
                 for (var i = 0; i < json.length; i++) {
                     if (json[i].shoeCondition == 'used') continue;
                     if (priceMap[json[i].size]) {
@@ -57,6 +59,8 @@ module.exports = {
                     }
                 }
                 shoe.resellPrices.goat = priceMap;
+                console.log("Price map - ", priceMap);
+                console.log("resell prices - ", shoe.resellPrices.goat);
                 callback()
             } catch (error) {
                 console.log(error);
@@ -72,7 +76,9 @@ module.exports = {
             callback()
         } else {
             let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
+            console.log("apiLink picture - ", apiLink);
             try {
+                console.log("Goat resell link in picture -", shoe.resellLinks.goat);
                 const response = await got(apiLink, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15',
@@ -81,6 +87,7 @@ module.exports = {
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
+                console.log("json - ", json);
                 if (json.productTemplateExternalPictures) {
                     if (json.productTemplateExternalPictures[0]) {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[0].mainPictureUrl);
@@ -98,11 +105,13 @@ module.exports = {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[3].mainPictureUrl);
                     }
                 }
+                console.log("Shoe image links - ", shoe.imageLinks);
+                console.log("Shoe - ", shoe);
                 callback(shoe);
             } catch (error) {
                 let err = new Error("Could not connect to Goat while grabbing pictures for '" + shoe.styleID + "' Error: ", error)
                 console.log(err);
-                console.log(shoe);
+                console.log("shoe picture error" - shoe);
                 callback(err)
             }
         }
