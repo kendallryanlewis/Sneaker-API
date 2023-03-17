@@ -23,7 +23,7 @@ module.exports = {
             }
             callback();
         } catch (error) {
-            let err = new Error("Could not connect to Goat while searching getlink'" + shoe.styleID + "' Error: ", error)
+            let err = new Error("Could not connect to Goat while searching '" + shoe.styleID + "' Error: ", error)
             console.log(err);
             callback(err)
         }
@@ -35,7 +35,7 @@ module.exports = {
         } else {
             let apiLink = shoe.resellLinks.goat.replace('sneakers/', 'web-api/v1/product_variants?productTemplateId=');
             let priceMap = {};
-            console.log("apiLink - ", apiLink);
+
             try {
                 const response = await got(apiLink, {
                     headers: {
@@ -53,12 +53,14 @@ module.exports = {
                     } else {
                         priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100;
                     }
+
+
                 }
                 shoe.resellPrices.goat = priceMap;
                 callback()
             } catch (error) {
                 console.log(error);
-                let err = new Error("Could not connect to Goat while searching prices'" + shoe.styleID + "' Error: ", error)
+                let err = new Error("Could not connect to Goat while searching '" + shoe.styleID + "' Error: ", error)
                 console.log(err);
                 callback(err)
             }
@@ -79,7 +81,6 @@ module.exports = {
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
-                console.log("json - ", json);
                 if (json.productTemplateExternalPictures) {
                     if (json.productTemplateExternalPictures[0]) {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[0].mainPictureUrl);
@@ -101,7 +102,6 @@ module.exports = {
             } catch (error) {
                 let err = new Error("Could not connect to Goat while grabbing pictures for '" + shoe.styleID + "' Error: ", error)
                 console.log(err);
-                console.log("shoe picture error" - shoe);
                 callback(err)
             }
         }
