@@ -81,7 +81,7 @@ module.exports = class Sneaks {
     getProductPrices(shoeID, count = 1, callback) {
         const getPrices = (shoe) => {
             var cbCounter = 0;
-            stockXScraper.getPrices(shoe, function() {
+            /*stockXScraper.getPrices(shoe, function() {
                 cbCounter++;
                 if (cbCounter == 5) {
                     callback(null, shoe)
@@ -112,7 +112,7 @@ module.exports = class Sneaks {
                 if (cbCounter == 5) {
                     callback(null, shoe)
                 }
-            });
+            });*/
         }
 
         getProducts(shoeID, count, function(error, products) {
