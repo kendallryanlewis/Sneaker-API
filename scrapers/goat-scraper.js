@@ -30,46 +30,12 @@ module.exports = {
     },
 
     getPrices: async function(shoe, callback) {
-        console.log("Goat resell link -", shoe.resellLinks.goat);
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
             let apiLink = shoe.resellLinks.goat.replace('sneakers/', 'web-api/v1/product_variants?productTemplateId=');
             let priceMap = {};
             console.log("apiLink - ", apiLink);
-
-
-
-            const response = await got(apiLink, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
-                    'Content-Type': 'application/json',
-                },
-
-                http2: true,
-            });
-            var json = JSON.parse(response.body);
-            console.log("json - ", json);
-            console.log("Shoe - ", shoe);
-            for (var i = 0; i < json.length; i++) {
-                if (json[i].shoeCondition == 'used') continue;
-                if (priceMap[json[i].size]) {
-                    priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100 < priceMap[json[i].size] ? json[i].lowestPriceCents.amount / 100 : priceMap[json[i].size];
-                } else {
-                    priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100;
-                }
-            }
-            shoe.resellPrices.goat = priceMap;
-            console.log("Price map - ", priceMap);
-            console.log("resell prices - ", shoe.resellPrices.goat);
-
-
-
-
-
-
-
-
             try {
                 const response = await got(apiLink, {
                     headers: {
@@ -80,8 +46,6 @@ module.exports = {
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
-                console.log("json - ", json);
-                console.log("Shoe - ", shoe);
                 for (var i = 0; i < json.length; i++) {
                     if (json[i].shoeCondition == 'used') continue;
                     if (priceMap[json[i].size]) {
@@ -91,8 +55,6 @@ module.exports = {
                     }
                 }
                 shoe.resellPrices.goat = priceMap;
-                console.log("Price map - ", priceMap);
-                console.log("resell prices - ", shoe.resellPrices.goat);
                 callback()
             } catch (error) {
                 console.log(error);
@@ -104,12 +66,10 @@ module.exports = {
     },
 
     getPictures: async function(shoe, callback) {
-        console.log("Goat resell link in picture -", shoe.resellLinks.goat);
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
             let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
-            console.log("apiLink picture - ", apiLink);
             try {
                 const response = await got(apiLink, {
                     headers: {
@@ -137,8 +97,6 @@ module.exports = {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[3].mainPictureUrl);
                     }
                 }
-                console.log("Shoe image links - ", shoe.imageLinks);
-                console.log("Shoe - ", shoe);
                 callback(shoe);
             } catch (error) {
                 let err = new Error("Could not connect to Goat while grabbing pictures for '" + shoe.styleID + "' Error: ", error)
