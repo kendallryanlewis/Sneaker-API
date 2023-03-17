@@ -15,6 +15,8 @@ module.exports = {
                 http2: true,
             });
             var json = JSON.parse(response.body);
+            console.log(json);
+            console.log(shoe);
             if (json.results[0].hits[0]) {
                 if (json.results[0].hits[0].lowest_price_cents_usd / 100 != 0) {
                     shoe.lowestResellPrice.goat = json.results[0].hits[0].lowest_price_cents_usd / 100;
@@ -23,7 +25,7 @@ module.exports = {
             }
             callback();
         } catch (error) {
-            let err = new Error("Could not connect to Goat while searching '" + shoe.styleID + "' Error: ", error)
+            let err = new Error("Could not connect to Goat while searching getlink'" + shoe.styleID + "' Error: ", error)
             console.log(err);
             callback(err)
         }
@@ -53,14 +55,12 @@ module.exports = {
                     } else {
                         priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100;
                     }
-
-
                 }
                 shoe.resellPrices.goat = priceMap;
                 callback()
             } catch (error) {
                 console.log(error);
-                let err = new Error("Could not connect to Goat while searching '" + shoe.styleID + "' Error: ", error)
+                let err = new Error("Could not connect to Goat while searching prices'" + shoe.styleID + "' Error: ", error)
                 console.log(err);
                 callback(err)
             }
