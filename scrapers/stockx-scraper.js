@@ -58,7 +58,7 @@ module.exports = {
                 callback(null, products);
             }
         } catch (error) {
-            let err = new Error("Could not connect to StockX while searching '", shoe.styleID, "' Error: ", error)
+            let err = new Error("Could not connect to StockX while searching for '", shoe.styleID, "' Error: ", error)
             console.log(err);
             callback(err, products)
         }
@@ -96,3 +96,5 @@ module.exports = {
         }
     }
 }
+https: //stockx.com/api/products/CT8012-005?includes=market
+    https: //sneakers-64a5gganfa-vp.a.run.app/id/CT8012-005/prices
