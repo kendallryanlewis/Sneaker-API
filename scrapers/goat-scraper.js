@@ -30,13 +30,45 @@ module.exports = {
     },
 
     getPrices: async function(shoe, callback) {
+        console.log("Goat resell link -", shoe.resellLinks.goat);
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
             let apiLink = shoe.resellLinks.goat.replace('sneakers/', 'web-api/v1/product_variants?productTemplateId=');
             let priceMap = {};
-            console.log("Goat resell link -", shoe.resellLinks.goat);
             console.log("apiLink - ", apiLink);
+
+
+
+            const response = await got(apiLink, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
+                    'Content-Type': 'application/json',
+                },
+
+                http2: true,
+            });
+            var json = JSON.parse(response.body);
+            console.log("json - ", json);
+            console.log("Shoe - ", shoe);
+            for (var i = 0; i < json.length; i++) {
+                if (json[i].shoeCondition == 'used') continue;
+                if (priceMap[json[i].size]) {
+                    priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100 < priceMap[json[i].size] ? json[i].lowestPriceCents.amount / 100 : priceMap[json[i].size];
+                } else {
+                    priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100;
+                }
+            }
+            shoe.resellPrices.goat = priceMap;
+            console.log("Price map - ", priceMap);
+            console.log("resell prices - ", shoe.resellPrices.goat);
+
+
+
+
+
+
+
 
             try {
                 const response = await got(apiLink, {
@@ -72,13 +104,13 @@ module.exports = {
     },
 
     getPictures: async function(shoe, callback) {
+        console.log("Goat resell link in picture -", shoe.resellLinks.goat);
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
             let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
             console.log("apiLink picture - ", apiLink);
             try {
-                console.log("Goat resell link in picture -", shoe.resellLinks.goat);
                 const response = await got(apiLink, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15',
