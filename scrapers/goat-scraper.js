@@ -37,25 +37,26 @@ module.exports = {
             let priceMap = {};
 
             try {
-                const response = await got(apiLink, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
-                        'Content-Type': 'application/json',
-                    },
-
-                    http2: true,
+                /*const response = await got(apiLink, {	
+                  headers: {
+                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
+                    'Content-Type': 'application/json',
+                  },
+                  
+                  http2: true,
                 });
                 var json = JSON.parse(response.body);
                 for (var i = 0; i < json.length; i++) {
-                    if (json[i].shoeCondition == 'used') continue;
-                    if (priceMap[json[i].size]) {
-                        priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100 < priceMap[json[i].size] ? json[i].lowestPriceCents.amount / 100 : priceMap[json[i].size];
-                    } else {
-                        priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100;
-                    }
+                  if(json[i].shoeCondition == 'used') continue;
+                  if(priceMap[json[i].size]){
+                    priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100 < priceMap[json[i].size] ? json[i].lowestPriceCents.amount / 100 : priceMap[json[i].size];
+                  }
+                  else{
+                    priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100 ;
+                  }
 
-
-                }
+                  
+                }*/
                 shoe.resellPrices.goat = priceMap;
                 callback()
             } catch (error) {
