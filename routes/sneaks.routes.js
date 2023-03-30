@@ -32,7 +32,7 @@ module.exports = (app) => {
 
     //grabs the most popular sneakers 
     app.get('/home', function(req, res) {
-        const count = req.query.count || 40 // if the user doesn't provide the query param, it defaults to 40
+        const count = req.query.count || 60 // if the user doesn't provide the query param, it defaults to 40
         sneaks.getMostPopular(count, function(error, products) {
             if (error) {
                 console.log(error)
@@ -45,7 +45,7 @@ module.exports = (app) => {
     });
     //grabs the most popular sneakers 
     app.get('/snkrs', function(req, res) {
-        const count = req.query.count || 40 // if the user doesn't provide the query param, it defaults to 40
+        const count = req.query.count || 100 // if the user doesn't provide the query param, it defaults to 40
         sneaks.getSnkrs(count, function(error, products) {
             if (error) {
                 console.log(error)
@@ -59,7 +59,7 @@ module.exports = (app) => {
 
     //Grabs all sneakers given a keyword/parameter
     app.get('/search/:shoe', function(req, res) {
-        const count = req.query.count || 40 // if the user doesn't provide the query param, it defaults to 40
+        const count = req.query.count || 100 // if the user doesn't provide the query param, it defaults to 40
         sneaks.getProducts(req.params.shoe, count, function(error, products) {
             if (error) {
                 console.log(error)

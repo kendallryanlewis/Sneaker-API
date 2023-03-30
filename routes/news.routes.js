@@ -106,7 +106,7 @@ module.exports = (app) => {
                 res.send(releases3)
             }).catch(err => console.log(err))
     });
-    app.get('/kicksonfire', (req, res) => {
+    /*app.get('/kicksonfire', (req, res) => {
         const releases3 = []
         const base_url = 'https://www.kicksonfire.com/'
         for (let index = 1; index < 3; index++) {
@@ -133,7 +133,7 @@ module.exports = (app) => {
                 }).catch(err => console.log(err))
         }
         res.send(releases3)
-    });
+    });*/
     app.get('/release-dates', (req, res) => {
         const releases3 = []
         const url = 'https://www.nicekicks.com/sneaker-release-dates/?nk=upcoming'
