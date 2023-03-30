@@ -145,7 +145,7 @@ module.exports = (app) => {
                 $('.post-summary', html).each(function() {
                     const title = $(this).find('.post-summary__title').find('a').text()
                     const image = $(this).find('.post-summary__image').find('img').attr('src')
-                    const url = $(this).find('.post-summary__image').attr('href')
+                    const url = $(this).find('.post-summary__image').find('a').attr('href')
                     const mdate = $(this).find('.rdate__m').text().trim()
                     const ddate = $(this).find('.rdate__d').text().trim()
                     const details = $(this).find('.block-release-info').find('p').text()
