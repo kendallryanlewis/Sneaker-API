@@ -81,6 +81,7 @@ module.exports = {
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
+                callback(json);
                 if (json.productTemplateExternalPictures) {
                     if (json.productTemplateExternalPictures[0]) {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[0].mainPictureUrl);

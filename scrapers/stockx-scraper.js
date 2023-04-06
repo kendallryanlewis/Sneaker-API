@@ -52,7 +52,7 @@ module.exports = {
             }
 
             if (products.length == 0 || numOfShoes == 0) {
-                callback(new Error('Product Not Found'), null);
+                callback(new Error('Product Info Not Found'), null);
             } else {
                 callback(null, products);
             }
