@@ -42,7 +42,7 @@ module.exports = class Sneaks {
             }
             products.forEach(function(shoe) {
                 var cbCounter = 0;
-                flightClubScraper.getLink(shoe, function() {
+                stadiumGoodsScraper.getLink(shoe, function() {
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {
@@ -50,7 +50,7 @@ module.exports = class Sneaks {
                         }
                     }
                 });
-                stadiumGoodsScraper.getLink(shoe, function() {
+                flightClubScraper.getLink(shoe, function() {
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {
