@@ -43,19 +43,6 @@ module.exports = (app) => {
             }
         })
     });
-    //grabs the most popular sneakers 
-    app.get('/snkrs', function(req, res) {
-        const count = req.query.count || 100 // if the user doesn't provide the query param, it defaults to 40
-        sneaks.getSnkrs(count, function(error, products) {
-            if (error) {
-                console.log(error)
-                res.send("Product Not Found");
-            } else {
-                res.json(products);
-                console.log(products);
-            }
-        })
-    });
 
     //Grabs all sneakers given a keyword/parameter
     app.get('/search/:shoe', function(req, res) {
@@ -87,47 +74,3 @@ module.exports = (app) => {
     });
 
 }
-
-
-
-/*
-
-const PORT = 8001
-const axios = require('axios')
-const cheerio = require('cheerio')
-const express = require('express')
-
-const app = express()
-
-const url = 'https://www.nike.com/launch?s=upcoming'
-
-
-
-app.get('/', (req, res) => {
-    const releases = []
-    axios(url)
-        .then(response => {
-            const html = response.data
-            const $ = cheerio.load(html)
-            $('.product-card', html).each(function() {
-                const title = [$(this).find('.headline-5').text(), $(this).find('.headline-3').text()]
-                const realeaseDate = [$(this).find('.headline-4').text(), $(this).find('.headline-1').text()]
-                const image = $(this).find('img').attr('src')
-                const url = $(this).find('a').attr('href')
-                releases.push({
-                    title,
-                    realeaseDate,
-                    image,
-                    url
-                })
-            })
-            res.send(releases)
-        }).catch(err => console.log(err))
-})
-
-app.listen(PORT, () => {
-    console.log(`Example app listening at http://localhost:${PORT}`)
-})
-
-
-*/

@@ -3,6 +3,7 @@ const stockXScraper = require('../scrapers/stockx-scraper');
 const flightClubScraper = require('../scrapers/flightclub-scraper');
 const goatScraper = require('../scrapers/goat-scraper');
 const stadiumGoodsScraper = require('../scrapers/stadiumgoods-scraper');
+const snkrsScraper = require('../scrapers/snkrs-scraper');
 
 module.exports = class Sneaks {
     /* findOne (shoeID, callback) {
@@ -34,7 +35,6 @@ module.exports = class Sneaks {
       });
     };*/
     async getProducts(keyword, count = 40, callback) {
-
         var productCounter = 0;
         stockXScraper.getProductsAndInfo(keyword, count, function(error, products) {
             if (error) {
@@ -48,37 +48,29 @@ module.exports = class Sneaks {
                         if (productCounter++ + 1 == products.length) {
                             callback(null, products);
                         }
-
                     }
                 });
-
                 stadiumGoodsScraper.getLink(shoe, function() {
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {
                             callback(null, products);
                         }
-
                     }
                 });
-
                 goatScraper.getLink(shoe, function() {
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {
                             callback(null, products);
                         }
-
                     }
                 });
             });
-
         });
-
-
     }
 
-    getProductPrices(shoeID, callback) {
+    getProductPrices(shoeID, count = 1, callback) {
         const getPrices = (shoe) => {
             var cbCounter = 0;
             stockXScraper.getPrices(shoe, function() {
@@ -115,10 +107,10 @@ module.exports = class Sneaks {
             });
         }
 
-        getProducts(shoeID, 1, function(error, products) {
-            if (error || products[0].styleID.toLowerCase() != shoeID.toLowerCase()) {
+        getProducts(shoeID, count, function(error, products) {
+            if (error) {
                 console.log(new Error("No Products Found"));
-                callback(new Error("No Products Found"), null);
+                callback(error, null);
                 return;
             }
             getPrices(products[0]);
@@ -136,6 +128,15 @@ module.exports = class Sneaks {
 
     getMostPopular(count, callback) {
         getProducts("", count, function(error, products) {
+            if (error) {
+                callback(error, null);
+            } else {
+                callback(null, products)
+            }
+        });
+    };
+    getSnkrs(count, callback) {
+        getSnkrs("", count, function(error, products) {
             if (error) {
                 callback(error, null);
             } else {
@@ -163,24 +164,15 @@ var getProducts = function(keyword, count = 40, callback) {
                 }
             });
 
-            stadiumGoodsScraper.getLink(shoe, function() {
-                if (++cbCounter == 3) {
-                    //if all shoes links have been parsed then return
-                    if (productCounter++ + 1 == products.length) {
-                        callback(null, products);
-                    }
 
-                }
-            });
-
-            goatScraper.getLink(shoe, function() {
-                if (++cbCounter == 3) {
-                    //if all shoes links have been parsed then return
-                    if (productCounter++ + 1 == products.length) {
-                        callback(null, products);
-                    }
-                }
-            });
         });
+    });
+}
+var getSnkrs = function(keyword, count = 40, callback) {
+    var productCounter = 0;
+    snkrsScraper.getProductsAndInfo(keyword, count, function(error, products) {
+        if (error) {
+            callback(error, null)
+        }
     });
 }
