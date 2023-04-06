@@ -6,7 +6,7 @@ var SneakerSchema = new Schema({
     shoeName: String,
     brand: String,
     silhoutte: String,
-    styleID: String, 
+    styleID: String,
     retailPrice: Number,
     releaseDate: String,
     description: String,
@@ -14,22 +14,21 @@ var SneakerSchema = new Schema({
     thumbnail: String,
     urlKey: String,
     make: String,
-    goatProductId: Number,
     colorway: String,
-    resellLinks:{
+    resellLinks: {
         stockX: String,
         stadiumGoods: String,
         goat: String,
         flightClub: String
     },
     size: Number,
-    lowestResellPrice:{
+    lowestResellPrice: {
         stockX: Number,
         stadiumGoods: Number,
         goat: Number,
         flightClub: Number
     },
-    resellPrices:{
+    resellPrices: {
         stockX: {},
         goat: {},
         stadiumGoods: {},
