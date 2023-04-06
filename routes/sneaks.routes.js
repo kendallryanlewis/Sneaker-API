@@ -20,7 +20,7 @@ module.exports = (app) => {
 
     //Grabs price maps from each site of a particular shoe
     app.get('/id/:id/prices', function(req, res) {
-        sneaks.getProductPrices(req.params.id, 1, function(error, products) {
+        sneaks.getProductPrices(req.params.id.toUpperCase(), function(error, products) {
             if (error) {
                 console.log(error)
                 res.send("Product Not Found");
@@ -32,21 +32,20 @@ module.exports = (app) => {
 
     //grabs the most popular sneakers 
     app.get('/home', function(req, res) {
-        const count = req.query.count || 60 // if the user doesn't provide the query param, it defaults to 40
+        const count = req.query.count || 40 // if the user doesn't provide the query param, it defaults to 40
         sneaks.getMostPopular(count, function(error, products) {
             if (error) {
                 console.log(error)
                 res.send("Product Not Found");
             } else {
                 res.json(products);
-                console.log(products);
             }
         })
     });
 
     //Grabs all sneakers given a keyword/parameter
     app.get('/search/:shoe', function(req, res) {
-        const count = req.query.count || 100 // if the user doesn't provide the query param, it defaults to 40
+        const count = req.query.count || 40 // if the user doesn't provide the query param, it defaults to 40
         sneaks.getProducts(req.params.shoe, count, function(error, products) {
             if (error) {
                 console.log(error)
