@@ -20,6 +20,7 @@ module.exports = {
                     shoe.lowestResellPrice.goat = json.results[0].hits[0].lowest_price_cents_usd / 100;
                 }
                 shoe.resellLinks.goat = 'http://www.goat.com/sneakers/' + json.results[0].hits[0].slug;
+                shoe.goatProductId = json.results[0].hits[0].product_template_id;
             }
             callback();
         } catch (error) {
@@ -33,13 +34,13 @@ module.exports = {
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
-            let apiLink = shoe.resellLinks.goat.replace('sneakers/', 'web-api/v1/product_variants?productTemplateId=');
+            let apiLink = `http://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=${shoe.goatProductId}`;
             let priceMap = {};
 
             try {
                 const response = await got(apiLink, {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.1 Safari/605.1.15',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
                         'Content-Type': 'application/json',
                     },
 
@@ -48,10 +49,10 @@ module.exports = {
                 var json = JSON.parse(response.body);
                 for (var i = 0; i < json.length; i++) {
                     if (json[i].shoeCondition == 'used') continue;
-                    if (priceMap[json[i].size]) {
-                        priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100 < priceMap[json[i].size] ? json[i].lowestPriceCents.amount / 100 : priceMap[json[i].size];
+                    if (priceMap[json[i].sizeOption.value]) {
+                        priceMap[json[i].sizeOption.value] = json[i].lowestPriceCents.amount / 100 < priceMap[json[i].sizeOption.value] ? json[i].lowestPriceCents.amount / 100 : priceMap[json[i].sizeOption.value];
                     } else {
-                        priceMap[json[i].size] = json[i].lowestPriceCents.amount / 100;
+                        priceMap[json[i].sizeOption.value] = json[i].lowestPriceCents.amount / 100;
                     }
 
 
@@ -75,13 +76,12 @@ module.exports = {
             try {
                 const response = await got(apiLink, {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
                         'Content-Type': 'application/json',
                     },
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
-                callback(json);
                 if (json.productTemplateExternalPictures) {
                     if (json.productTemplateExternalPictures[0]) {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[0].mainPictureUrl);
