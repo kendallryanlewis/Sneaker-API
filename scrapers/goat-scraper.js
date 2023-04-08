@@ -68,12 +68,12 @@ module.exports = {
     },
 
     getPictures: async function(shoe, callback) {
-        console.log("Stockx shoe", shoe);
-        console.log("Stockx callback", callback);
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
             let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
+            console.log("kendall shoe", shoe.resellLinks.goat);
+            console.log("kendall apiLink", apiLink);
             try {
                 const response = await got(apiLink, {
                     headers: {
@@ -83,6 +83,7 @@ module.exports = {
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
+                console.log("kendall json", json);
                 if (json.productTemplateExternalPictures) {
                     if (json.productTemplateExternalPictures[0]) {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[0].mainPictureUrl);
