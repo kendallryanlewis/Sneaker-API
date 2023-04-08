@@ -34,9 +34,11 @@ module.exports = class Sneaks {
       });
     };*/
     async getProducts(keyword, count = 40, callback) {
-
         var productCounter = 0;
+        console.log("kendall");
         stockXScraper.getProductsAndInfo(keyword, count, function(error, products) {
+            console.log(keyword);
+            console.log(products);
             if (error) {
                 callback(error, null)
             }
@@ -63,6 +65,8 @@ module.exports = class Sneaks {
                 });
 
                 goatScraper.getLink(shoe, function() {
+                    console.log("kendall2");
+                    console.log(shoe);
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {

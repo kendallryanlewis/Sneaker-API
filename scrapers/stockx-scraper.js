@@ -21,11 +21,8 @@ module.exports = {
 
 
             var json = JSON.parse(response.body);
-            console.log("Showing get products and info stockx", json);
             var products = [];
             var numOfShoes = json.hits.length;
-
-            console.log("Showing number of shoes stockx", numOfShoes);
 
             for (var i = 0; i < json.hits.length; i++) {
                 if (!json.hits[i].style_id || (json.hits[i].style_id).indexOf(' ') >= 0) {
@@ -52,8 +49,6 @@ module.exports = {
                     shoe.lowestResellPrice.stockX = json.hits[i].lowest_ask;
                 }
                 products.push(shoe)
-
-                console.log("Showing product stockx", products);
             }
 
             if (products.length == 0 || numOfShoes == 0) {
@@ -62,7 +57,7 @@ module.exports = {
                 callback(null, products);
             }
         } catch (error) {
-            let err = new Error("Could not connect to StockX while searching '", key, "' Error: ", error)
+            let err = new Error("Could not connect to StockX while searching '", shoe.styleID, "' Error: ", error)
             console.log(err);
             callback(err, products)
         }
@@ -78,7 +73,6 @@ module.exports = {
                 http2: true
             });
             let json = JSON.parse(response.body);
-            console.log("Showing get prices stockx", json);
             Object.keys(json.Product.children).forEach(function(key) {
                 if (json.Product.children[key].market.lowestAsk == 0) return;
                 //if size is in womens, then remove "W"
@@ -88,7 +82,7 @@ module.exports = {
 
                 }
                 priceMap[size] = json.Product.children[key].market.lowestAsk;
-                console.log("Showing get prices stockx", json);
+
             });
             shoe.resellPrices.stockX = priceMap;
             callback();

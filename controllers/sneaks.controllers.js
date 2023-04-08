@@ -148,9 +148,6 @@ module.exports = class Sneaks {
 
 var getProducts = function(keyword, count = 40, callback) {
     var productCounter = 0;
-    console.log("Get products keyword", keyword);
-    console.log("Get products counter", productCounter);
-    console.log("Get products callback", callback);
     stockXScraper.getProductsAndInfo(keyword, count, function(error, products) {
         if (error) {
             callback(error, null)
@@ -158,7 +155,6 @@ var getProducts = function(keyword, count = 40, callback) {
         products.forEach(function(shoe) {
             var cbCounter = 0;
             flightClubScraper.getLink(shoe, function() {
-                console.log("Flight club scrapper", shoe);
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {
@@ -168,7 +164,6 @@ var getProducts = function(keyword, count = 40, callback) {
             });
 
             stadiumGoodsScraper.getLink(shoe, function() {
-                console.log("stadium scrapper", shoe);
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {
@@ -179,11 +174,9 @@ var getProducts = function(keyword, count = 40, callback) {
             });
 
             goatScraper.getLink(shoe, function() {
-                console.log("Goat scrapper", shoe);
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {
-                        console.log("Goat scrapper products", products);
                         callback(null, products);
                     }
                 }
