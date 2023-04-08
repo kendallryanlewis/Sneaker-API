@@ -54,9 +54,8 @@ module.exports = {
                     } else {
                         priceMap[json[i].sizeOption.value] = json[i].lowestPriceCents.amount / 100;
                     }
-
-
                 }
+                console.log("get prices json", json);
                 shoe.resellPrices.goat = priceMap;
                 callback()
             } catch (error) {
@@ -69,6 +68,8 @@ module.exports = {
     },
 
     getPictures: async function(shoe, callback) {
+        console.log("Stockx shoe", shoe);
+        console.log("Stockx callback", callback);
         if (!shoe.resellLinks.goat) {
             callback()
         } else {

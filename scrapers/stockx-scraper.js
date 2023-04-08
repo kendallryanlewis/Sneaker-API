@@ -73,6 +73,8 @@ module.exports = {
                 http2: true
             });
             let json = JSON.parse(response.body);
+
+            console.log("Stockx json", json);
             Object.keys(json.Product.children).forEach(function(key) {
                 if (json.Product.children[key].market.lowestAsk == 0) return;
                 //if size is in womens, then remove "W"
