@@ -88,10 +88,7 @@ module.exports = {
 
                 }
                 priceMap[size] = json.Product.children[key].market.lowestAsk;
-<<<<<<< HEAD
-=======
                 console.log("Showing get prices stockx", json);
->>>>>>> parent of d245201 (v.7)
             });
             shoe.resellPrices.stockX = priceMap;
             callback();
