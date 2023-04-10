@@ -77,7 +77,7 @@ module.exports = {
             console.log("kendall shoe", shoe.resellLinks.goat);
             console.log("kendall apiLink", apiLink);
 
-            /*try {
+            try {
                 const response = await fetch(apiLink, {
                     method: 'POST',
                     body: myBody, // string or object
@@ -91,10 +91,10 @@ module.exports = {
                 let err = new Error("grabbing pictures for '" + shoe.styleID + "' Error: ", error)
                 console.log(err);
                 callback(err)
-            }*/
+            }
 
 
-            try {
+            /*try {
                 const response = await got(apiLink, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
@@ -126,7 +126,7 @@ module.exports = {
                 let err = new Error("Could not connect to Goat while grabbing pictures for '" + shoe.styleID + "' Error: ", error)
                 console.log(err);
                 callback(err)
-            }
+            }*/
         }
     }
 }

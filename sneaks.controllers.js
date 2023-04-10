@@ -177,14 +177,14 @@ var getProducts = function(keyword, count = 40, callback) {
                 }
             });
 
-            /*goatScraper.getLink(shoe, function() {
+            goatScraper.getLink(shoe, function() {
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {
                         callback(null, products);
                     }
                 }
-            });*/
+            });
         });
     });
 }
