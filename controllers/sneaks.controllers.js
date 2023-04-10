@@ -62,7 +62,7 @@ module.exports = class Sneaks {
                     }
                 });
 
-                Scraper.getLink(shoe, function() {
+                /*Scraper.getLink(shoe, function() {
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {
@@ -70,7 +70,7 @@ module.exports = class Sneaks {
                         }
 
                     }
-                });
+                });*/
             });
 
         });
@@ -181,8 +181,12 @@ var getProducts = function(keyword, count = 40, callback) {
                 }
             });
 
+<<<<<<< HEAD
             goatScraper.getLink(shoe, function() {
                 console.log("Goat scrapper", shoe);
+=======
+            /*goatScraper.getLink(shoe, function() {
+>>>>>>> parent of 5d7085d (updating)
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {
@@ -190,7 +194,7 @@ var getProducts = function(keyword, count = 40, callback) {
                         callback(null, products);
                     }
                 }
-            });
+            });*/
         });
     });
 }
