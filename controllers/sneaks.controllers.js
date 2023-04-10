@@ -62,7 +62,7 @@ module.exports = class Sneaks {
                     }
                 });
 
-                goatScraper.getLink(shoe, function() {
+                /*Scraper.getLink(shoe, function() {
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {
@@ -70,7 +70,7 @@ module.exports = class Sneaks {
                         }
 
                     }
-                });
+                });*/
             });
 
         });
@@ -110,12 +110,12 @@ module.exports = class Sneaks {
                     callback(null, shoe)
                 }
             });
-            goatScraper.getPictures(shoe, function() {
+            /*goatScraper.getPictures(shoe, function() {
                 cbCounter++;
                 if (cbCounter == 5) {
                     callback(null, shoe)
                 }
-            });
+            });*/
         }
 
         getProducts(shoeID, 1, function(error, products) {
@@ -176,14 +176,14 @@ var getProducts = function(keyword, count = 40, callback) {
                 }
             });
 
-            goatScraper.getLink(shoe, function() {
+            /*goatScraper.getLink(shoe, function() {
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {
                         callback(null, products);
                     }
                 }
-            });
+            });*/
         });
     });
 }

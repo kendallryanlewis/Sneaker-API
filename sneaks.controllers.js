@@ -64,7 +64,7 @@ module.exports = class Sneaks {
                     }
                 });
 
-                goatScraper.getLink(shoe, function() {
+                /*goatScraper.getLink(shoe, function() {
                     console.log("kendall2");
                     console.log(shoe);
                     if (++cbCounter == 3) {
@@ -74,7 +74,7 @@ module.exports = class Sneaks {
                         }
 
                     }
-                });
+                });*/
             });
 
         });
@@ -105,7 +105,7 @@ module.exports = class Sneaks {
                 }
 
             });
-            goatScraper.getPrices(shoe, function() {
+            /*goatScraper.getPrices(shoe, function() {
                 cbCounter++;
                 if (cbCounter == 5) {
                     callback(null, shoe)
@@ -116,7 +116,7 @@ module.exports = class Sneaks {
                 if (cbCounter == 5) {
                     callback(null, shoe)
                 }
-            });
+            });*/
         }
 
         getProducts(shoeID, count, function(error, products) {
@@ -177,14 +177,14 @@ var getProducts = function(keyword, count = 40, callback) {
                 }
             });
 
-            goatScraper.getLink(shoe, function() {
+            /*goatScraper.getLink(shoe, function() {
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {
                         callback(null, products);
                     }
                 }
-            });
+            });*/
         });
     });
 }

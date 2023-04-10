@@ -44,7 +44,6 @@ module.exports = {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
                         'Content-Type': 'application/json',
                     },
-
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
@@ -70,8 +69,6 @@ module.exports = {
 
     getPictures: async function(shoe, callback) {
         let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
-        console.log("kendall shoe", shoe.resellLinks.goat);
-        console.log("kendall apiLink", apiLink);
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
@@ -79,6 +76,24 @@ module.exports = {
             let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
             console.log("kendall shoe", shoe.resellLinks.goat);
             console.log("kendall apiLink", apiLink);
+
+            /*try {
+                const response = await fetch(apiLink, {
+                    method: 'POST',
+                    body: myBody, // string or object
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const myJson = await response.json(); //extract JSON from the http response
+                // do something with myJson
+            } catch (error) {
+                let err = new Error("grabbing pictures for '" + shoe.styleID + "' Error: ", error)
+                console.log(err);
+                callback(err)
+            }*/
+
+
             try {
                 const response = await got(apiLink, {
                     headers: {
