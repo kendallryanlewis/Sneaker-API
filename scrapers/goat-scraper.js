@@ -69,7 +69,7 @@ module.exports = {
     },
 
     getPictures: async function(shoe, callback) {
-        /*let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
+        let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
         console.log("kendall shoe", shoe.resellLinks.goat);
         console.log("kendall apiLink", apiLink);
         if (!shoe.resellLinks.goat) {
@@ -112,6 +112,6 @@ module.exports = {
                 console.log(err);
                 callback(err)
             }
-        }*/
+        }
     }
 }
