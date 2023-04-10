@@ -72,6 +72,7 @@ module.exports = {
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
+<<<<<<< HEAD
             console.log("start here")
             let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
             console.log("kendall shoe", shoe.resellLinks.goat);
@@ -120,12 +121,46 @@ module.exports = {
                     if (json.productTemplateExternalPictures[3]) {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[3].mainPictureUrl);
                     }
+=======
+            /*let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
+            try {
+              const response = await got(apiLink, {
+                headers: {
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
+                  'Content-Type': 'application/json',
+                },
+                http2: true,
+              });
+              var json = JSON.parse(response.body);
+              if (json.productTemplateExternalPictures) {
+                if (json.productTemplateExternalPictures[0]) {
+                  shoe.imageLinks.push(json.productTemplateExternalPictures[0].mainPictureUrl);
+>>>>>>> parent of d245201 (v.7)
                 }
-                callback(shoe);
+                if (json.productTemplateExternalPictures[2]) {
+                  shoe.imageLinks.push(json.productTemplateExternalPictures[2].mainPictureUrl);
+                }
+                if (json.productTemplateExternalPictures[5]) {
+                  shoe.imageLinks.push(json.productTemplateExternalPictures[5].mainPictureUrl);
+                }
+                if (json.productTemplateExternalPictures[7]) {
+                  shoe.imageLinks.push(json.productTemplateExternalPictures[7].mainPictureUrl);
+                }
+                if (json.productTemplateExternalPictures[3]) {
+                  shoe.imageLinks.push(json.productTemplateExternalPictures[3].mainPictureUrl);
+                }
+              }
+              callback(shoe);
             } catch (error) {
+<<<<<<< HEAD
                 let err = new Error("Could not connect to Goat while grabbing pictures for '" + shoe.styleID + "' Error: ", error)
                 console.log(err);
                 callback(err)
+=======
+              let err = new Error("Could not connect to Goat while grabbing pictures for '" + shoe.styleID + "' Error: ", error)
+              console.log(err);
+              callback(err)
+>>>>>>> parent of d245201 (v.7)
             }*/
         }
     }

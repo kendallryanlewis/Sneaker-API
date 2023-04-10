@@ -34,11 +34,9 @@ module.exports = class Sneaks {
       });
     };*/
     async getProducts(keyword, count = 40, callback) {
+
         var productCounter = 0;
-        console.log("kendall");
         stockXScraper.getProductsAndInfo(keyword, count, function(error, products) {
-            console.log(keyword);
-            console.log(products);
             if (error) {
                 callback(error, null)
             }
@@ -64,9 +62,13 @@ module.exports = class Sneaks {
                     }
                 });
 
+<<<<<<< HEAD
                 /*goatScraper.getLink(shoe, function() {
                     console.log("kendall2");
                     console.log(shoe);
+=======
+                goatScraper.getLink(shoe, function() {
+>>>>>>> parent of d245201 (v.7)
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {
