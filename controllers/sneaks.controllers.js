@@ -110,12 +110,12 @@ module.exports = class Sneaks {
                     callback(null, shoe)
                 }
             });
-            /*goatScraper.getPictures(shoe, function() {
+            goatScraper.getPictures(shoe, function() {
                 cbCounter++;
                 if (cbCounter == 5) {
                     callback(null, shoe)
                 }
-            });*/
+            });
         }
 
         getProducts(shoeID, 1, function(error, products) {

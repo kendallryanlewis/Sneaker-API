@@ -1,12 +1,12 @@
 const got = require('got');
-const request = require('request');
-
+const axios = require('axios');
 
 
 module.exports = {
     getLink: async function(shoe, callback) {
         try {
-            const response = await got.post('https://2fwotdvm2o-dsn.algolia.net/1/indexes/*/queries?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.25.1%3Breact%20(16.9.0)%3Breact-instantsearch%20(6.2.0)%3BJS%20Helper%20(3.1.0)&x-algolia-application-id=2FWOTDVM2O&x-algolia-api-key=ac96de6fef0e02bb95d433d8d5c7038a', {
+            url = 'https://2fwotdvm2o-dsn.algolia.net/1/indexes/*/queries?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.25.1%3Breact%20(16.9.0)%3Breact-instantsearch%20(6.2.0)%3BJS%20Helper%20(3.1.0)&x-algolia-application-id=2FWOTDVM2O&x-algolia-api-key=ac96de6fef0e02bb95d433d8d5c7038a'
+            const response = await got.post(url, {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15',
                     'Content-Type': 'application/json'
@@ -19,30 +19,31 @@ module.exports = {
                 if (json.results[0].hits[0].lowest_price_cents_usd / 100 != 0) {
                     shoe.lowestResellPrice.goat = json.results[0].hits[0].lowest_price_cents_usd / 100;
                 }
-                shoe.resellLinks.goat = 'http://www.goat.com/sneakers/' + json.results[0].hits[0].slug;
+                shoe.goatDetails = json.results[0].hits[0];
                 shoe.goatProductId = json.results[0].hits[0].product_template_id;
+                shoe.resellLinks.goat = 'https://www.goat.com/sneakers/' + json.results[0].hits[0].slug;
             }
             callback();
         } catch (error) {
-            let err = new Error("Could not connect to Goat while searching '" + shoe.styleID + "' Error: ", error)
+            let err = new Error("Could not connect to Goat while searching link '" + shoe.styleID + "' Error: ", error)
             console.log(err);
             callback(err)
         }
     },
-
     getPrices: async function(shoe, callback) {
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
-            let apiLink = `http://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=${shoe.goatProductId}`;
-            console.log("apiLink", apiLink);
-            let priceMap = {};
+            //let apiLink = 'https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=' + shoe.goatDetails.product_template_id + '&countryCode=US'
+            let apiLink = `https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=${shoe.goatProductId}&countryCode=US`;
 
+            let priceMap = {};
             try {
+                const releases = [];
                 const response = await got(apiLink, {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
-                        'Content-Type': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15',
+                        'Content-Type': 'application/json'
                     },
                     http2: true,
                 });
@@ -55,56 +56,32 @@ module.exports = {
                         priceMap[json[i].sizeOption.value] = json[i].lowestPriceCents.amount / 100;
                     }
                 }
-                console.log("get prices json", json);
                 shoe.resellPrices.goat = priceMap;
                 callback()
             } catch (error) {
-                console.log(error);
-                let err = new Error("Could not connect to Goat while searching '" + shoe.styleID + "' Error: ", error)
+                let err = new Error("Could not connect to Goat while searching new '" + shoe.styleID + "' Error: ", error)
                 console.log(err);
                 callback(err)
             }
         }
     },
-
     getPictures: async function(shoe, callback) {
-        let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
-<<<<<<< HEAD
-            console.log("start here")
-            let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
-            console.log("kendall shoe", shoe.resellLinks.goat);
-            console.log("kendall apiLink", apiLink);
+            //let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
+            //let apiLink = 'https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=' + shoe.goatDetails.product_template_id + '&countryCode=US'
+            let apiLink = `https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=${shoe.goatProductId}&countryCode=US`;
 
             try {
-                const response = await fetch(apiLink, {
-                    method: 'POST',
-                    body: myBody, // string or object
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const myJson = await response.json(); //extract JSON from the http response
-                // do something with myJson
-            } catch (error) {
-                let err = new Error("grabbing pictures for '" + shoe.styleID + "' Error: ", error)
-                console.log(err);
-                callback(err)
-            }
-
-
-            /*try {
                 const response = await got(apiLink, {
                     headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
-                        'Content-Type': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15',
+                        'Content-Type': 'application/json'
                     },
                     http2: true,
                 });
                 var json = JSON.parse(response.body);
-                console.log("kendall json", json);
                 if (json.productTemplateExternalPictures) {
                     if (json.productTemplateExternalPictures[0]) {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[0].mainPictureUrl);
@@ -121,47 +98,13 @@ module.exports = {
                     if (json.productTemplateExternalPictures[3]) {
                         shoe.imageLinks.push(json.productTemplateExternalPictures[3].mainPictureUrl);
                     }
-=======
-            /*let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
-            try {
-              const response = await got(apiLink, {
-                headers: {
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
-                  'Content-Type': 'application/json',
-                },
-                http2: true,
-              });
-              var json = JSON.parse(response.body);
-              if (json.productTemplateExternalPictures) {
-                if (json.productTemplateExternalPictures[0]) {
-                  shoe.imageLinks.push(json.productTemplateExternalPictures[0].mainPictureUrl);
->>>>>>> parent of d245201 (v.7)
                 }
-                if (json.productTemplateExternalPictures[2]) {
-                  shoe.imageLinks.push(json.productTemplateExternalPictures[2].mainPictureUrl);
-                }
-                if (json.productTemplateExternalPictures[5]) {
-                  shoe.imageLinks.push(json.productTemplateExternalPictures[5].mainPictureUrl);
-                }
-                if (json.productTemplateExternalPictures[7]) {
-                  shoe.imageLinks.push(json.productTemplateExternalPictures[7].mainPictureUrl);
-                }
-                if (json.productTemplateExternalPictures[3]) {
-                  shoe.imageLinks.push(json.productTemplateExternalPictures[3].mainPictureUrl);
-                }
-              }
-              callback(shoe);
+                callback(shoe);
             } catch (error) {
-<<<<<<< HEAD
                 let err = new Error("Could not connect to Goat while grabbing pictures for '" + shoe.styleID + "' Error: ", error)
                 console.log(err);
                 callback(err)
-=======
-              let err = new Error("Could not connect to Goat while grabbing pictures for '" + shoe.styleID + "' Error: ", error)
-              console.log(err);
-              callback(err)
->>>>>>> parent of d245201 (v.7)
-            }*/
+            }
         }
     }
 }

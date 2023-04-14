@@ -19,13 +19,9 @@ module.exports = {
                 http2: true
             });
 
-
             var json = JSON.parse(response.body);
-            console.log("Showing get products and info stockx", json);
             var products = [];
             var numOfShoes = json.hits.length;
-
-            console.log("Showing number of shoes stockx", numOfShoes);
 
             for (var i = 0; i < json.hits.length; i++) {
                 if (!json.hits[i].style_id || (json.hits[i].style_id).indexOf(' ') >= 0) {
@@ -51,9 +47,8 @@ module.exports = {
                 if (json.hits[i].lowest_ask) {
                     shoe.lowestResellPrice.stockX = json.hits[i].lowest_ask;
                 }
+                shoe.stockxDetails = json.hits[i]
                 products.push(shoe)
-
-                console.log("Showing product stockx", products);
             }
 
             if (products.length == 0 || numOfShoes == 0) {
@@ -62,7 +57,7 @@ module.exports = {
                 callback(null, products);
             }
         } catch (error) {
-            let err = new Error("Could not connect to StockX while searching '", key, "' Error: ", error)
+            let err = new Error("Could not connect to StockX while searching info '", key, "' Error: ", error)
             console.log(err);
             callback(err, products)
         }
@@ -70,13 +65,17 @@ module.exports = {
 
     getPrices: async function(shoe, callback) {
         let priceMap = {}
+        let url = 'https://stockx.com/api/products/' + shoe.urlKey + '?includes=market';
+
         try {
-            const response = await got('https://stockx.com/api/products/' + shoe.urlKey + '?includes=market', {
+
+            const response = await got(url, {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15'
                 },
                 http2: true
             });
+
             let json = JSON.parse(response.body);
             console.log("Showing get prices stockx", json);
             Object.keys(json.Product.children).forEach(function(key) {
@@ -94,10 +93,10 @@ module.exports = {
             callback();
         } catch (error) {
             console.log(error)
-            let err = new Error("Could not connect to StockX while searching '", shoe.styleID, "' Error: ", error)
+            let err = new Error(shoe.styleID, error)
+                //let err = new Error("Could not connect to StockX while searching prices '", shoe.styleID, "' Error: ", error)
             console.log(err);
             callback(err)
-
         }
     }
 }
