@@ -1,3 +1,4 @@
+const { randomUUID } = require('crypto');
 const got = require('got');
 const Sneaker = require('../models/Sneaker');
 
@@ -47,7 +48,15 @@ module.exports = {
                 if (json.hits[i].lowest_ask) {
                     shoe.lowestResellPrice.stockX = json.hits[i].lowest_ask;
                 }
-                shoe.stockxDetails = json.hits[i]
+                //shoe.stockxDetails = json.hits[i]
+                //console.log("huh", shoe.stockxDetails);
+                shoe.id = json.hits[i].id
+                shoe.uuid = json.hits[i].uuid
+                shoe.thumbnail_url = json.hits[i].thumbnail_url
+                shoe.imageUrl = json.hits[i].imageUrl
+                shoe.highest_bid = json.hits[i].highest_bid
+                shoe.lowest_ask = json.hits[i].lowest_ask
+                shoe.last_sale = json.hits[i].last_sale
                 products.push(shoe)
             }
 
@@ -66,16 +75,13 @@ module.exports = {
     getPrices: async function(shoe, callback) {
         let priceMap = {}
         let url = 'https://stockx.com/api/products/' + shoe.urlKey + '?includes=market';
-
         try {
-
             const response = await got(url, {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15'
                 },
                 http2: true
             });
-
             let json = JSON.parse(response.body);
             console.log("Showing get prices stockx", json);
             Object.keys(json.Product.children).forEach(function(key) {
@@ -84,7 +90,6 @@ module.exports = {
                 var size = json.Product.children[key].shoeSize
                 if (size[size.length - 1] == 'W') {
                     size = size.substring(0, size.length - 1);
-
                 }
                 priceMap[size] = json.Product.children[key].market.lowestAsk;
                 console.log("Showing get prices stockx", json);
