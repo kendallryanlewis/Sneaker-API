@@ -19,7 +19,18 @@ module.exports = {
                 if (json.results[0].hits[0].lowest_price_cents_usd / 100 != 0) {
                     shoe.lowestResellPrice.goat = json.results[0].hits[0].lowest_price_cents_usd / 100;
                 }
-                shoe.goatDetails = json.results[0].hits[0];
+                //shoe.goatDetails = json.results[0].hits[0];
+                shoe.category = json.results[0].hits[0].category;
+                shoe.designer = json.results[0].hits[0].designer;
+                shoe.details = json.results[0].hits[0].details;
+                shoe.grid_picture_url = json.results[0].hits[0].grid_picture_url;
+                shoe.name = json.results[0].hits[0].name;
+                shoe.nickname = json.results[0].hits[0].nickname;
+                shoe.release_date = json.results[0].hits[0].release_date;
+                shoe.silhouette = json.results[0].hits[0].silhouette;
+                shoe.size_brand = json.results[0].hits[0].size_brand;
+                shoe.story_html = json.results[0].hits[0].story_html;
+                shoe.story = json.results[0].hits[0].story;
                 shoe.goatProductId = json.results[0].hits[0].product_template_id;
                 shoe.resellLinks.goat = 'https://www.goat.com/sneakers/' + json.results[0].hits[0].slug;
             }
