@@ -62,7 +62,7 @@ module.exports = class Sneaks {
                     }
                 });
 
-                /*Scraper.getLink(shoe, function() {
+                goatScraper.getLink(shoe, function() {
                     if (++cbCounter == 3) {
                         //if all shoes links have been parsed then return
                         if (productCounter++ + 1 == products.length) {
@@ -70,7 +70,7 @@ module.exports = class Sneaks {
                         }
 
                     }
-                });*/
+                });
             });
 
         });
@@ -81,12 +81,6 @@ module.exports = class Sneaks {
     getProductPrices(shoeID, callback) {
         const getPrices = (shoe) => {
             var cbCounter = 0;
-            stockXScraper.getPrices(shoe, function() {
-                cbCounter++;
-                if (cbCounter == 5) {
-                    callback(null, shoe)
-                }
-            });
             flightClubScraper.getPrices(shoe, function() {
                 cbCounter++;
                 if (cbCounter == 5) {
@@ -101,6 +95,12 @@ module.exports = class Sneaks {
                 }
             });
             goatScraper.getPictures(shoe, function() {
+                cbCounter++;
+                if (cbCounter == 5) {
+                    callback(null, shoe)
+                }
+            });
+            stockXScraper.getPrices(shoe, function() {
                 cbCounter++;
                 if (cbCounter == 5) {
                     callback(null, shoe)
@@ -161,8 +161,7 @@ var getProducts = function(keyword, count = 40, callback) {
                     }
                 }
             });
-
-            stadiumGoodsScraper.getLink(shoe, function() {
+            goatScraper.getLink(shoe, function() {
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {
@@ -170,8 +169,7 @@ var getProducts = function(keyword, count = 40, callback) {
                     }
                 }
             });
-
-            goatScraper.getLink(shoe, function() {
+            stadiumGoodsScraper.getLink(shoe, function() {
                 if (++cbCounter == 3) {
                     //if all shoes links have been parsed then return
                     if (productCounter++ + 1 == products.length) {

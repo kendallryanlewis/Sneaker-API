@@ -1,6 +1,7 @@
-const { randomUUID } = require('crypto');
 const got = require('got');
 const Sneaker = require('../models/Sneaker');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 
 module.exports = {
@@ -19,11 +20,9 @@ module.exports = {
                 body: `{"params":"query=${key}&facets=*&filters=&hitsPerPage=${count}"}`,
                 http2: true
             });
-
             var json = JSON.parse(response.body);
             var products = [];
             var numOfShoes = json.hits.length;
-
             for (var i = 0; i < json.hits.length; i++) {
                 if (!json.hits[i].style_id || (json.hits[i].style_id).indexOf(' ') >= 0) {
                     numOfShoes--;
@@ -66,7 +65,7 @@ module.exports = {
                 callback(null, products);
             }
         } catch (error) {
-            let err = new Error("Could not connect to StockX while searching info '", key, "' Error: ", error)
+            let err = new Error("Could not connect to StockX while searching '", key, "' Error: ", error)
             console.log(err);
             callback(err, products)
         }
@@ -75,33 +74,31 @@ module.exports = {
     getPrices: async function(shoe, callback) {
         let priceMap = {}
         let url = 'https://stockx.com/api/products/' + shoe.urlKey + '?includes=market';
-        try {
-            const response = await got(url, {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15'
-                },
-                http2: true
-            });
-            let json = JSON.parse(response.body);
-            console.log("Showing get prices stockx", json);
-            Object.keys(json.Product.children).forEach(function(key) {
-                if (json.Product.children[key].market.lowestAsk == 0) return;
-                //if size is in womens, then remove "W"
-                var size = json.Product.children[key].shoeSize
-                if (size[size.length - 1] == 'W') {
-                    size = size.substring(0, size.length - 1);
-                }
-                priceMap[size] = json.Product.children[key].market.lowestAsk;
-                console.log("Showing get prices stockx", json);
-            });
-            shoe.resellPrices.stockX = priceMap;
-            callback();
-        } catch (error) {
-            console.log(error)
-            let err = new Error(shoe.styleID, error)
-                //let err = new Error("Could not connect to StockX while searching prices '", shoe.styleID, "' Error: ", error)
-            console.log(err);
-            callback(err)
-        }
+        axios({
+                method: 'get',
+                url,
+                headers: { withCredentials: true, 'User-Agent': 'Postman' }
+            })
+            .then(json => {
+                Object.keys(json.data.Product.children).forEach(function(key) {
+                    if (json.data.Product.children[key].market.lowestAsk == 0) return;
+                    //if size is in womens, then remove "W"
+                    var size = json.data.Product.children[key].shoeSize
+                    if (size[size.length - 1] == 'W') {
+                        size = size.substring(0, size.length - 1);
+
+                    }
+                    priceMap[size] = json.data.Product.children[key].market.lowestAsk;
+                    console.log("Showing get prices stockx", json);
+                });
+                shoe.resellPrices.stockX = priceMap;
+                callback();
+            })
+            .catch(err => {
+                console.log('err', err);
+                callback(err);
+            })
+            //res.send().status(200);
+            //callback();
     }
 }
