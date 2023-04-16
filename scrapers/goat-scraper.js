@@ -80,9 +80,9 @@ module.exports = {
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
-            //let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
+            let apiLink = shoe.resellLinks.goat.replace('sneakers', 'web-api/v1/product_templates');
             //let apiLink = 'https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=' + shoe.goatDetails.product_template_id + '&countryCode=US'
-            let apiLink = `https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=${shoe.goatProductId}&countryCode=US`;
+            //let apiLink = `https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=${shoe.goatProductId}&countryCode=US`;
 
             try {
                 const response = await got(apiLink, {
