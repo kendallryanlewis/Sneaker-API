@@ -34,7 +34,6 @@ module.exports = {
                     }
                     callback(shoe);
                 }
-
             }
         );
     },
