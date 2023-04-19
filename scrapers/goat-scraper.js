@@ -34,6 +34,7 @@ module.exports = {
                 shoe.goatProductId = json.results[0].hits[0].product_template_id;
                 shoe.resellLinks.goat = 'https://www.goat.com/sneakers/' + json.results[0].hits[0].slug;
             }
+
             callback();
         } catch (error) {
             let err = new Error("Could not connect to Goat while searching link '" + shoe.styleID + "' Error: ", error)
