@@ -46,10 +46,33 @@ module.exports = {
         if (!shoe.resellLinks.goat) {
             callback()
         } else {
-            //let apiLink = 'https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=' + shoe.goatDetails.product_template_id + '&countryCode=US'
+            let url = 'https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=' + shoe.product_template_id + '&countryCode=US'
             let apiLink = `https://www.goat.com/web-api/v1/product_variants/buy_bar_data?productTemplateId=${shoe.goatProductId}&countryCode=US`;
 
             let priceMap = {};
+            axios({
+                    method: 'get',
+                    url,
+                    headers: { withCredentials: true, 'User-Agent': 'Postman' }
+                })
+                .then(json => {
+                    var json = JSON.parse(response.body);
+                    for (var i = 0; i < json.length; i++) {
+                        if (json[i].shoeCondition == 'used') continue;
+                        if (priceMap[json[i].sizeOption.value]) {
+                            priceMap[json[i].sizeOption.value] = json[i].lowestPriceCents.amount / 100 < priceMap[json[i].sizeOption.value] ? json[i].lowestPriceCents.amount / 100 : priceMap[json[i].sizeOption.value];
+                        } else {
+                            priceMap[json[i].sizeOption.value] = json[i].lowestPriceCents.amount / 100;
+                        }
+                    }
+                    shoe.resellPrices.goat = priceMap;
+                    console.log(priceMap)
+                    callback()
+                })
+                .catch(err => {
+                    console.log('err', err);
+                    callback(err);
+                })
             try {
                 const releases = [];
                 const response = await got(apiLink, {
