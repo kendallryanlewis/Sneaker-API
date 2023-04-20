@@ -59,6 +59,7 @@ module.exports = {
                     },
                     http2: true,
                 });
+
                 var json = JSON.parse(response.body);
                 for (var i = 0; i < json.length; i++) {
                     if (json[i].shoeCondition == 'used') continue;
