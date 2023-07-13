@@ -4,6 +4,7 @@ const app = express();
 const mongoose = require('mongoose');
 require('./routes/sneaks.routes.js')(app);
 require('./routes/news.routes.js')(app);
+require('./routes/shop.routes.js')(app);
 require('dotenv').config();
 const SneaksAPI = require('./controllers/sneaks.controllers.js');
 
