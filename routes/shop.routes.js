@@ -17,25 +17,50 @@ module.exports = (app) => {
     app.get('/stores/:city', async(req, res) => {
         try {
             const city = req.params.city;
+            const releases = []
             const url = `https://www.yellowpages.com/search?search_terms=sneaker+stores&geo_location_terms=${city}`;
 
-            const response = await axios.get(url);
-            const $ = cheerio.load(response.data);
+            axios(url)
+                .then(response => {
+                    const html = response.data
+                    const $ = cheerio.load(html)
+                    $('.v-card', html).each(function() {
+                        const name = [$(this).find('.business-name').text().trim()]
+                        const address = [$(this).find('.adr').text().trim()]
+                        const phone = [$(this).find('.phones').text().trim()]
+                        releases.push({
+                            name,
+                            address,
+                            phone
+                        })
+                    })
+                    res.send(releases)
+                }).catch(err => console.log(err))
 
 
-            const stores = [];
+            /*
+                const city = req.params.city;
+                    const url = `https://www.yellowpages.com/search?search_terms=sneaker+stores&geo_location_terms=${city}`;
 
-            $('.v-card').each((_, element) => {
-                const name = $(element).find('.business-name').text().trim();
-                const address = $(element).find('.adr').text().trim();
-                const phone = $(element).find('.phones').text().trim();
+                    const response = await axios.get(url);
+                    const $ = cheerio.load(response.data);
 
-                stores.push({ name, address, phone });
-            });
 
-            res.json(stores);
+                    const stores = [];
+
+                    $('.v-card').each((_, element) => {
+                        const name = $(element).find('.business-name').text().trim();
+                        const address = $(element).find('.adr').text().trim();
+                        const phone = $(element).find('.phones').text().trim();
+
+                        stores.push({ name, address, phone });
+                    });
+
+                    res.json(stores);
+            */
         } catch (error) {
             res.status(500).json({ error: 'An error occurred while fetching stores.' });
+            console.error(error);
         }
     });
 
