@@ -8,6 +8,11 @@ const SneaksAPI = require('../controllers/sneaks.controllers.js');
 
 const sneaks = new SneaksAPI();
 module.exports = (app) => {
+    app.use(function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+        next();
+    });
     // Define the endpoint to retrieve sneaker stores in a city
     app.get('/stores/:city', async(req, res) => {
         try {
@@ -16,6 +21,7 @@ module.exports = (app) => {
 
             const response = await axios.get(url);
             const $ = cheerio.load(response.data);
+
 
             const stores = [];
 
