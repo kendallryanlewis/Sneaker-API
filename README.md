@@ -98,7 +98,7 @@ GET localhost:3000/search/:keyword
 
 This route takes in a style ID and returns sneaker info including a price map and more images of the product (getProductprices(styleID))
 ```
-GET localhost:3000/id/:styleID/prices
+GET localhost:3000/id/:styleID/prices 
 ```
 
 
