@@ -88,7 +88,7 @@ module.exports = class Sneaks {
                 }
 
             });
-            goatScraper.getPrices(shoe, function() {
+            /*goatScraper.getPrices(shoe, function() {
                 cbCounter++;
                 if (cbCounter == 5) {
                     callback(null, shoe)
@@ -111,7 +111,7 @@ module.exports = class Sneaks {
                 if (cbCounter == 5) {
                     callback(null, shoe)
                 }
-            });
+            });*/
         }
 
         getProducts(shoeID, 1, function(error, products) {
