@@ -1,66 +1,194 @@
+/**
+ * ============================================================================
+ * FLIGHT CLUB SCRAPER - TABLE OF CONTENTS
+ * ============================================================================
+ * 
+ * 1. Dependencies & Imports
+ * 2. Configuration & Constants
+ *    2.1 URLs - API endpoints
+ *    2.2 User Agent - Browser identification
+ * 3. Scraper Functions
+ *    3.1 getLink() - Fetch Flight Club product link and metadata
+ *    3.2 getPrices() - Fetch size-based pricing via GraphQL
+ * 
+ * ============================================================================
+ */
+
+// ============================================================================
+// 1. DEPENDENCIES & IMPORTS
+// ============================================================================
+
 const got = require('got');
 
+// ============================================================================
+// 2. CONFIGURATION & CONSTANTS
+// ============================================================================
+
+/**
+ * 2.1 API URLs
+ */
+const FLIGHT_CLUB_ALGOLIA_URL = 'https://2fwotdvm2o-dsn.algolia.net/1/indexes/*/queries?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.32.0%3Breact-instantsearch%205.4.0%3BJS%20Helper%202.26.1&x-algolia-application-id=2FWOTDVM2O&x-algolia-api-key=ac96de6fef0e02bb95d433d8d5c7038a';
+const FLIGHT_CLUB_TOKEN_URL = 'https://www.flightclub.com/token';
+const FLIGHT_CLUB_GRAPHQL_URL = 'https://www.flightclub.com/graphql';
+const FLIGHT_CLUB_BASE_URL = 'https://www.flightclub.com';
+
+/**
+ * 2.2 User Agent
+ */
+const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+/**
+ * 2.3 Request Options Template
+ */
+const REQUEST_OPTIONS = {
+    headers: {
+        'User-Agent': USER_AGENT,
+        'Content-Type': 'application/json'
+    },
+    timeout: 15000,
+    http2: true
+};
+
+// ============================================================================
+// 3. SCRAPER FUNCTIONS
+// ============================================================================
+
 module.exports = {
-    getLink: async function(shoe, callback) {
+    /**
+     * 3.1 GET LINK
+     * 
+     * Searches Flight Club's Algolia API for a sneaker by style ID and extracts
+     * the product link, lowest price, and description.
+     * 
+     * Features:
+     * - Searches by style ID (SKU)
+     * - Sets Flight Club resell link
+     * - Extracts lowest resell price
+     * - Saves product story/description
+     * - 15 second timeout
+     * 
+     * @param {Object} shoe - Sneaker object with styleID property
+     * @param {Function} callback - Callback(error, shoe) called on completion
+     * 
+     * @returns {void} Updates shoe object with Flight Club data
+     * 
+     * @example
+     * getLink(shoe, (err, updatedShoe) => {
+     *   if (!err) console.log(shoe.resellLinks.flightClub);
+     * });
+     */
+    getLink: async function (shoe, callback) {
+        if (!shoe.styleID) {
+            return callback(new Error('Missing styleID'));
+        }
+
         try {
-            const body = JSON.stringify({
+            const requestBody = {
                 requests: [{
                     indexName: "product_variants_v2_flight_club",
                     params: `query=${shoe.styleID}&hitsPerPage=1&maxValuesPerFacet=1&filters=&facets=["lowest_price_cents_usd"]&tagFilters=`
                 }]
-            });
-
-            const options = {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
-                    'Content-Type': 'application/json'
-                },
-                body: body
             };
 
-            const response = await got.post("https://2fwotdvm2o-dsn.algolia.net/1/indexes/*/queries?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.32.0%3Breact-instantsearch%205.4.0%3BJS%20Helper%202.26.1&x-algolia-application-id=2FWOTDVM2O&x-algolia-api-key=ac96de6fef0e02bb95d433d8d5c7038a", options);
-            const data = JSON.parse(response.body);
+            const response = await got.post(FLIGHT_CLUB_ALGOLIA_URL, {
+                ...REQUEST_OPTIONS,
+                body: JSON.stringify(requestBody)
+            });
 
-            if (data.results[0].hits.length > 0) {
-                const hit = data.results[0].hits[0];
-                shoe.lowestResellPrice.flightClub = hit.lowest_price_cents_usd / 100;
-                shoe.resellLinks.flightClub = 'https://www.flightclub.com/' + hit.slug;
-                shoe.description = hit.story;
-                shoe.flightclubDetails = data.results[0];
-                callback(null, shoe);
-            } else {
-                throw new Error("No hits found for the given style ID.");
+            const data = JSON.parse(response.body);
+            const hits = data.results?.[0]?.hits;
+
+            if (!hits || hits.length === 0) {
+                console.warn(`No Flight Club results found for ${shoe.styleID}`);
+                return callback();
             }
+
+            const hit = hits[0];
+
+            // Extract price
+            if (hit.lowest_price_cents_usd) {
+                shoe.lowestResellPrice.flightClub = hit.lowest_price_cents_usd / 100;
+            }
+
+            // Build product URL
+            if (hit.slug) {
+                shoe.resellLinks.flightClub = `${FLIGHT_CLUB_BASE_URL}/${hit.slug}`;
+            }
+
+            // Store description/story
+            if (hit.story) {
+                shoe.description = hit.story;
+            }
+
+            // Store raw details for reference
+            shoe.flightclubDetails = data.results[0];
+
+            callback(null, shoe);
         } catch (error) {
-            console.error("Error fetching product link:", error);
-            callback(error);
+            console.warn(`FlightClub lookup failed for ${shoe.styleID}: ${error.message}`);
+            callback();
         }
     },
 
-    getPrices: async function(shoe, callback) {
+    /**
+     * 3.2 GET PRICES
+     * 
+     * Fetches size-based pricing from Flight Club using their GraphQL API.
+     * Requires CSRF token fetching before making the GraphQL request.
+     * 
+     * Process:
+     * 1. Fetch CSRF token from /token endpoint
+     * 2. Query GraphQL API with token
+     * 3. Parse size and price data
+     * 
+     * Features:
+     * - CSRF token handling
+     * - GraphQL query execution
+     * - Size-to-price mapping
+     * - 15 second timeout per request
+     * 
+     * @param {Object} shoe - Sneaker object with resellLinks.flightClub
+     * @param {Function} callback - Callback(error, shoe) called on completion
+     * 
+     * @returns {void} Updates shoe.resellPrices.flightClub with size-to-price map
+     * 
+     * @example
+     * getPrices(shoe, (err, updatedShoe) => {
+     *   if (!err) console.log(shoe.resellPrices.flightClub); // { "8": 250, "8.5": 275, ... }
+     * });
+     */
+    getPrices: async function (shoe, callback) {
         if (!shoe.resellLinks.flightClub) {
-            callback(new Error("No resell link available."));
-            return;
+            console.warn(`No Flight Club resell link for ${shoe.styleID}`);
+            return callback();
         }
 
         try {
+            // Extract slug from URL
             const slug = shoe.resellLinks.flightClub.split('.com/')[1];
-            const tokenResponse = await got('https://www.flightclub.com/token', {
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0'
-                }
+
+            if (!slug) {
+                console.warn(`Invalid Flight Club URL format for ${shoe.styleID}`);
+                return callback();
+            }
+
+            // Step 1: Fetch CSRF token
+            const tokenResponse = await got(FLIGHT_CLUB_TOKEN_URL, {
+                headers: { 'User-Agent': USER_AGENT },
+                timeout: 15000
             });
             const token = tokenResponse.body;
 
-            const graphqlResponse = await got.post('https://www.flightclub.com/graphql', {
+            // Step 2: Query GraphQL API with token
+            const graphqlResponse = await got.post(FLIGHT_CLUB_GRAPHQL_URL, {
+                ...REQUEST_OPTIONS,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.2; rv:20.0) Gecko/20121202 Firefox/20.0',
-                    'Content-Type': 'application/json',
+                    ...REQUEST_OPTIONS.headers,
                     'x-csrf-token': token
                 },
                 body: JSON.stringify({
                     operationName: "getProductTemplate",
-                    variables: { slug: slug },
+                    variables: { slug },
                     query: `query getProductTemplate($slug: String!) {
                         getProductTemplate(slug: $slug) {
                             newSizes {
@@ -69,21 +197,68 @@ module.exports = {
                             }
                         }
                     }`
-                }),
-                http2: true
+                })
             });
 
             const json = JSON.parse(graphqlResponse.body);
+            const sizes = json.data?.getProductTemplate?.newSizes;
+
+            if (!sizes || !Array.isArray(sizes)) {
+                console.warn(`No size data available for ${shoe.styleID} on Flight Club`);
+                return callback();
+            }
+
+            // Build price map
             const priceMap = {};
-            json.data.getProductTemplate.newSizes.forEach(size => {
-                priceMap[size.size.display] = size.lowestPriceOption.price.value / 100;
-            });
+            for (const sizeData of sizes) {
+                const display = sizeData.size?.display;
+                const priceValue = sizeData.lowestPriceOption?.price?.value;
+
+                if (display && priceValue) {
+                    priceMap[display] = priceValue / 100;
+
+                    // Update sizeAvailability map
+                    if (!shoe.sizeAvailability) {
+                        shoe.sizeAvailability = new Map();
+                    }
+                    shoe.sizeAvailability.set(display, priceValue > 0);
+                }
+            }
 
             shoe.resellPrices.flightClub = priceMap;
+
+            // Add price history entry
+            if (!shoe.priceHistory) {
+                shoe.priceHistory = [];
+            }
+            const existingEntry = shoe.priceHistory.find(
+                entry => entry.prices?.flightClub
+            );
+            if (!existingEntry && Object.keys(priceMap).length > 0) {
+                const avgPrice = Object.values(priceMap).reduce((a, b) => a + b, 0) / Object.values(priceMap).length;
+                shoe.priceHistory.push({
+                    date: new Date(),
+                    prices: {
+                        flightClub: {
+                            averagePrice: avgPrice
+                        }
+                    }
+                });
+            }
+
+            // Update metadata
+            if (shoe.metadata) {
+                shoe.metadata.updatedAt = new Date();
+                shoe.metadata.lastScraped = new Date();
+                if (!shoe.metadata.scrapedSources.includes('flightclub')) {
+                    shoe.metadata.scrapedSources.push('flightclub');
+                }
+            }
+
             callback(null, shoe);
         } catch (error) {
-            console.error("Error fetching prices:", error);
-            callback(error);
+            console.warn(`FlightClub price fetch failed for ${shoe.styleID}: ${error.message}`);
+            callback();
         }
     }
 };

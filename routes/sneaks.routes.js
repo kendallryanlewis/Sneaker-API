@@ -1,75 +1,174 @@
 const SneaksAPI = require('../controllers/sneaks.controllers.js');
+const rateLimit = require('express-rate-limit');
+const cache = require('../utils/cache');
+const response = require('../utils/response');
+
+// Rate limiter configuration
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: { success: false, error: { message: 'Too many requests, please try again later' } },
+    standardHeaders: true,
+    legacyHeaders: false
+});
 
 const sneaks = new SneaksAPI();
+
 module.exports = (app) => {
-    app.use(function(req, res, next) {
+    // Apply rate limiting to all routes
+    app.use('/id', limiter);
+    app.use('/search', limiter);
+    app.use('/popular', limiter);
+    app.use('/home', limiter);
+
+    app.use(function (req, res, next) {
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         next();
     });
 
+    // Health check endpoint
+    app.get('/health', function (req, res) {
+        const cacheStats = cache.getStats();
+        return response.success(res, {
+            status: 'ok',
+            uptime: process.uptime(),
+            cache: {
+                hits: cacheStats.hits,
+                misses: cacheStats.misses,
+                keys: cacheStats.keys
+            }
+        });
+    });
+
+    // Cache stats endpoint
+    app.get('/cache/stats', function (req, res) {
+        return response.success(res, cache.getStats());
+    });
+
+    // Clear cache endpoint (protected - add auth in production)
+    app.delete('/cache', function (req, res) {
+        cache.flush();
+        return response.success(res, { message: 'Cache cleared successfully' });
+    });
+
     //Grabs sneaker info from the database given the styleID
-    app.get('/id/:id', function(req, res) {
-        sneaks.findOne(req.params.id, function(error, shoe) {
+    app.get('/id/:id', function (req, res) {
+        const cacheKey = `shoe:${req.params.id}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+            return response.success(res, cached, { cached: true });
+        }
+
+        sneaks.findOne(req.params.id, function (error, shoe) {
             if (error) {
-                res.send("Product Not Found");
+                return response.notFound(res, "Product Not Found");
             } else {
-                res.json(shoe);
+                cache.set(cacheKey, shoe, 3600); // Cache for 1 hour
+                return response.success(res, shoe, { cached: false });
             }
         })
     });
 
     //Grabs price maps from each site of a particular shoe
-    app.get('/id/:id/prices', function(req, res) {
-        sneaks.getProductPrices(req.params.id.toUpperCase(), function(error, products) {
+    app.get('/id/:id/prices', function (req, res) {
+        const cacheKey = `prices:${req.params.id}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+            return response.success(res, cached, { cached: true });
+        }
+
+        sneaks.getProductPrices(req.params.id.toUpperCase(), function (error, products) {
             if (error) {
-                console.log(error)
-                res.send("Product Not Found");
+                console.error(error);
+                return response.notFound(res, "Product Not Found");
             } else {
-                res.json(products);
+                cache.set(cacheKey, products, 1800); // Cache for 30 minutes (prices change more frequently)
+                return response.success(res, products, { cached: false });
             }
         })
     });
 
     //grabs the most popular sneakers 
-    app.get('/home', function(req, res) {
-        const count = req.query.count || 40 // if the user doesn't provide the query param, it defaults to 40
-        sneaks.getMostPopular(count, function(error, products) {
+    app.get('/home', function (req, res) {
+        const count = parseInt(req.query.count) || 40;
+        const cacheKey = `popular:${count}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+            return response.success(res, cached, { count: cached.length, cached: true });
+        }
+
+        sneaks.getMostPopular(count, function (error, products) {
             if (error) {
-                console.log(error)
-                res.send("Product Not Found");
+                console.error(error);
+                return response.error(res, "Could not fetch popular products");
             } else {
-                res.json(products);
+                cache.set(cacheKey, products, 1800); // Cache for 30 minutes
+                return response.success(res, products, { count: products.length, cached: false });
+            }
+        })
+    });
+
+    //grabs the most popular sneakers (alternative route with count as parameter)
+    app.get('/popular/:count', function (req, res) {
+        const count = parseInt(req.params.count) || 40;
+        const cacheKey = `popular:${count}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+            return response.success(res, cached, { count: cached.length, cached: true });
+        }
+
+        sneaks.getMostPopular(count, function (error, products) {
+            if (error) {
+                console.error(error);
+                return response.error(res, "Could not fetch popular products");
+            } else {
+                cache.set(cacheKey, products, 1800); // Cache for 30 minutes
+                return response.success(res, products, { count: products.length, cached: false });
             }
         })
     });
 
     //Grabs all sneakers given a keyword/parameter
-    app.get('/search/:shoe', function(req, res) {
-        const count = req.query.count || 40 // if the user doesn't provide the query param, it defaults to 40
-        sneaks.getProducts(req.params.shoe, count, function(error, products) {
+    app.get('/search/:shoe', function (req, res) {
+        const count = parseInt(req.query.count) || 40;
+        const keyword = req.params.shoe;
+        const cacheKey = `search:${keyword}:${count}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+            return response.success(res, cached, { count: cached.length, keyword, cached: true });
+        }
+
+        sneaks.getProducts(keyword, count, function (error, products) {
             if (error) {
-                console.log(error)
-                res.send("Product Not Found");
+                console.error(error);
+                return response.notFound(res, "Product Not Found");
             } else {
-                res.json(products);
+                cache.set(cacheKey, products, 3600); // Cache for 1 hour
+                return response.success(res, products, { count: products.length, keyword, cached: false });
             }
         })
     });
+
     //Grabs all sneakers in the database
-    app.get('/shoes', function(req, res) {
-        sneaks.findAll(function(error, products) {
+    app.get('/shoes', function (req, res) {
+        sneaks.findAll(function (error, products) {
             if (error) {
-                console.log(error)
-                res.send("No Products In Database");
+                console.error(error);
+                return response.error(res, "No Products In Database");
             } else {
-                res.json(products);
+                return response.success(res, products, { count: products.length });
             }
         })
     });
 
     //redirects root route to home page
-    app.get('/', function(req, res) {
+    app.get('/', function (req, res) {
         res.redirect('/home')
     });
 

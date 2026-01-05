@@ -2,11 +2,26 @@ const express = require('express');
 const { connections } = require('mongoose');
 const app = express();
 const mongoose = require('mongoose');
+const response = require('./utils/response');
+
+// Load all routes first
 require('./routes/sneaks.routes.js')(app);
 require('./routes/news.routes.js')(app);
 require('./routes/shop.routes.js')(app);
+
 require('dotenv').config();
 const SneaksAPI = require('./controllers/sneaks.controllers.js');
+
+// 404 handler for undefined routes (must be after all route definitions)
+app.use((req, res) => {
+    return response.notFound(res, `Route ${req.path} not found`);
+});
+
+// Error handling middleware (must be last)
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    return response.serverError(res, 'An unexpected error occurred', err.message);
+});
 
 var port = process.env.PORT || 8080;
 mongoose.Promise = global.Promise;
