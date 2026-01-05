@@ -1,20 +1,26 @@
-# Use the official lightweight Node.js 12 image.
-# https://hub.docker.com/_/node
-FROM node:12-slim
+# Use the official Node.js 20 LTS image
+FROM node:20-slim
 
-# Create and change to the app directory.
+# Create and change to the app directory
 WORKDIR /usr/src/app
 
-# Copy application dependency manifests to the container image.
-# A wildcard is used to ensure both package.json AND package-lock.json are copied.
-# Copying this separately prevents re-running npm install on every code change.
+# Copy application dependency manifests to the container image
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
 COPY package*.json ./
 
-# Install production dependencies.
-RUN npm install --only=production
+# Install production dependencies
+# Use npm ci for faster, more reliable installs
+RUN npm ci --only=production
 
-# Copy local code to the container image.
+# Copy local code to the container image
 COPY . ./
 
-# Run the web service on container startup.
+# Set environment variable for port
+ENV PORT=8080
+ENV NODE_ENV=production
+
+# Expose port 8080
+EXPOSE 8080
+
+# Run the web service on container startup
 CMD [ "npm", "start" ]
