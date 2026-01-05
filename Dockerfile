@@ -10,7 +10,7 @@ COPY package*.json ./
 
 # Install production dependencies
 # Use npm ci for faster, more reliable installs
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy local code to the container image
 COPY . ./

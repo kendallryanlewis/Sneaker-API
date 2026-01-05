@@ -33,8 +33,11 @@ mongoose.Promise = global.Promise;
 // Connecting to the database
 //mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/sneakers');
 
-app.listen(port, function () {
-  console.log(`Sneaks app listening on port `, port);
+// Start server - bind to 0.0.0.0 for Cloud Run/Docker compatibility
+app.listen(port, '0.0.0.0', function () {
+  console.log(`Sneaks app listening on port ${port}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Health check: http://localhost:${port}/health`);
 });
 
 module.exports = app;
