@@ -20,6 +20,6 @@ coverage/
 *.swo
 *~
 .cache/
-Dockerfile
-.dockerignore
-cloudbuild.yaml
+# Dockerfile - needed for Cloud Run deployment
+# .dockerignore - needed for Docker builds
+# cloudbuild.yaml - needed for Cloud Build
