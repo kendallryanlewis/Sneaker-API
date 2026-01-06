@@ -184,7 +184,69 @@ module.exports = class Sneaks {
     }
 
     /**
-     * 3.3 GET MOST POPULAR
+     * 3.3 FIND ONE PRODUCT
+     * 
+     * Finds a single sneaker by style ID or StockX object ID (UUID).
+     * Performs a precise search and returns detailed product information.
+     * 
+     * @param {String} id - Style ID (e.g., "CT8012-047") or StockX objectID (UUID)
+     * @param {Function} callback - Callback(error, product)
+     * 
+     * @example
+     * // By style ID
+     * sneaks.findOne("CT8012-047", (err, shoe) => {
+     *   if (err) console.error(err);
+     *   else console.log(shoe);
+     * });
+     * 
+     * // By StockX objectID  
+     * sneaks.findOne("15795a80-5cc8-4d2d-9ed0-20250d83be7f", (err, shoe) => {
+     *   if (err) console.error(err);
+     *   else console.log(shoe);
+     * });
+     */
+    async findOne(id, callback) {
+        try {
+            // Determine if this is a UUID (object ID) or style ID
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+            
+            let searchParam;
+            if (isUUID) {
+                // StockX objectID - need to search by it
+                const response = await stockXScraper.getProductByObjectId(id);
+                if (!response || !response.styleID) {
+                    return callback(new Error('Product not found'), null);
+                }
+                searchParam = response.styleID;
+            } else {
+                // Style ID - use directly
+                searchParam = id;
+            }
+
+            // Get the product with full details
+            this.getProducts(searchParam, 1, async (error, products) => {
+                if (error) return callback(error, null);
+                if (!products || products.length === 0) {
+                    return callback(new Error('Product not found'), null);
+                }
+
+                const shoe = products[0];
+                
+                // Verify we got the right product
+                if (shoe.styleID.toLowerCase() !== searchParam.toLowerCase()) {
+                    return callback(new Error('No matching product found'), null);
+                }
+
+                callback(null, shoe);
+            });
+        } catch (error) {
+            console.error('Error in findOne:', error.message);
+            callback(error, null);
+        }
+    }
+
+    /**
+     * 3.4 GET MOST POPULAR
      * 
      * Fetches the most popular/trending sneakers from StockX.
      * Uses an empty search keyword to get trending results.

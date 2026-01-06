@@ -286,6 +286,10 @@ module.exports = {
                 return callback();
             }
 
+            // Initialize arrays if they don't exist
+            shoe.imageLinks = shoe.imageLinks || [];
+            shoe.images = shoe.images || [];
+
             // Select specific image indices for different angles
             // Indices: 0 (main), 2 (side), 5 (back), 7 (detail), 3 (alternate)
             const imageIndices = [0, 2, 5, 7, 3];
@@ -298,7 +302,6 @@ module.exports = {
                     shoe.imageLinks.push(picture.mainPictureUrl);
 
                     // Add to structured images array
-                    shoe.images = shoe.images || [];
                     shoe.images.push({
                         url: picture.mainPictureUrl,
                         angle: angleNames[i],

@@ -180,6 +180,8 @@ module.exports = {
 
                     shoe.id = hit.id || '';
                     shoe.uuid = hit.uuid || '';
+                    // objectID is a standard Algolia field
+                    shoe.objectID = hit.objectID || '';
                     shoe.thumbnail_url = hit.thumbnail_url || '';
                     shoe.imageUrl = hit.imageUrl || '';
                     shoe.highest_bid = hit.highest_bid || null;
@@ -339,6 +341,64 @@ module.exports = {
             }
             // Always callback without error so other scrapers continue
             callback();
+        }
+    },
+
+    /**
+     * 4.3 GET PRODUCT BY OBJECT ID
+     * 
+     * Fetches a single product by its StockX objectID (UUID).
+     * Used when the frontend provides a UUID instead of a style ID.
+     * 
+     * @param {String} objectId - StockX objectID (UUID format)
+     * @returns {Promise<Object>} Resolves with product data including styleID
+     * 
+     * @example
+     * const product = await getProductByObjectId("15795a80-5cc8-4d2d-9ed0-20250d83be7f");
+     * console.log(product.styleID); // "CT8012-047"
+     */
+    getProductByObjectId: async function (objectId) {
+        try {
+            const response = await retryWithBackoff(async () => {
+                return await got.post('https://xw7sbct9v6-1.algolianet.com/1/indexes/products/query?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%203.32.1&x-algolia-application-id=XW7SBCT9V6&x-algolia-api-key=6b5e76b49705eb9f51a06d3c82f7acee', {
+                    headers: {
+                        'User-Agent': getRandomUserAgent(),
+                        "accept": "application/json",
+                        "accept-language": "en-US,en;q=0.9",
+                        "content-type": "application/x-www-form-urlencoded",
+                        "sec-fetch-dest": "empty",
+                        "sec-fetch-mode": "cors",
+                        "sec-fetch-site": "cross-site",
+                        "referer": "https://stockx.com/",
+                        "origin": "https://stockx.com"
+                    },
+                    body: `{"params":"filters=objectID:${objectId}&hitsPerPage=1"}`,
+                    http2: true,
+                    timeout: 15000,
+                    retry: { limit: 0 }
+                });
+            }, 3, 1000);
+
+            const json = JSON.parse(response.body);
+
+            if (!json.hits || json.hits.length === 0) {
+                throw new Error(`No product found with objectID: ${objectId}`);
+            }
+
+            const hit = json.hits[0];
+            
+            return {
+                styleID: hit.style_id || hit.styleID,
+                shoeName: hit.name,
+                brand: hit.brand,
+                retailPrice: hit.retail_price,
+                thumbnail: hit.thumbnail_url || hit.media?.thumbUrl,
+                urlKey: hit.url,
+                objectID: hit.objectID
+            };
+        } catch (error) {
+            console.error(`Error fetching product by objectID ${objectId}:`, error.message);
+            throw error;
         }
     }
 }

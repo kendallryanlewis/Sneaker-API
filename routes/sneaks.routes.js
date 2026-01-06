@@ -80,15 +80,23 @@ module.exports = (app) => {
             return response.success(res, cached, { cached: true });
         }
 
-        sneaks.getProductPrices(req.params.id.toUpperCase(), function (error, products) {
-            if (error) {
-                console.error(error);
+        // First, resolve UUID to styleID if needed
+        sneaks.findOne(req.params.id, function (findError, shoe) {
+            if (findError || !shoe) {
                 return response.notFound(res, "Product Not Found");
-            } else {
-                cache.set(cacheKey, products, 1800); // Cache for 30 minutes (prices change more frequently)
-                return response.success(res, products, { cached: false });
             }
-        })
+            
+            // Use the styleID to fetch prices
+            sneaks.getProductPrices(shoe.styleID.toUpperCase(), function (error, products) {
+                if (error) {
+                    console.error(error);
+                    return response.notFound(res, "Product Not Found");
+                } else {
+                    cache.set(cacheKey, products, 1800); // Cache for 30 minutes (prices change more frequently)
+                    return response.success(res, products, { cached: false });
+                }
+            });
+        });
     });
 
     //grabs the most popular sneakers 

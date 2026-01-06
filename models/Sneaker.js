@@ -28,6 +28,7 @@ var SneakerSchema = new Schema({
     goatProductId: Number,
     id: String,
     uuid: String,
+    objectID: String, // StockX Algolia objectID (UUID format)
     thumbnail_url: String,
     imageUrl: String,
     highest_bid: String,
