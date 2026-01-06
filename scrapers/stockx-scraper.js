@@ -184,9 +184,19 @@ module.exports = {
                     shoe.objectID = hit.objectID || '';
                     shoe.thumbnail_url = hit.thumbnail_url || '';
                     shoe.imageUrl = hit.imageUrl || '';
+                    
+                    // Market data - set as numbers
                     shoe.highest_bid = hit.highest_bid || null;
                     shoe.lowest_ask = hit.lowest_ask || null;
                     shoe.last_sale = hit.last_sale || null;
+                    shoe.sales_last_72 = hit.sales_last_72 || null;
+                    shoe.deadstock_sold = hit.deadstock_sold || null;
+                    shoe.total_dollars = hit.total_dollars || null;
+                    
+                    // Product details - override initial values
+                    if (hit.colorway) shoe.colorway = hit.colorway;
+                    if (hit.price) shoe.retailPrice = hit.price;
+                    if (hit.release_date) shoe.release_date = hit.release_date;
 
                     // Add main image to images array (imageLinks handled by getPictures)
                     if (hit.media && hit.media.imageUrl) {
@@ -197,6 +207,15 @@ module.exports = {
                             angle: 'main',
                             source: 'stockx'
                         });
+                        
+                        // Store all StockX image sizes
+                        shoe.stockxImages = {
+                            imageUrl: hit.media.imageUrl,
+                            smallImageUrl: hit.media.smallImageUrl,
+                            thumbUrl: hit.media.thumbUrl,
+                            thumbnail_url: hit.thumbnail_url,
+                            gallery: hit.media.gallery || []
+                        };
                     }
 
                     // Set release status based on availability

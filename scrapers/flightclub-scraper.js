@@ -120,6 +120,19 @@ module.exports = {
             if (hit.story) {
                 shoe.description = hit.story;
             }
+            
+            // Product details
+            if (hit.nickname) shoe.nickname = hit.nickname;
+            if (hit.silhouette) shoe.silhouette = hit.silhouette;
+            if (hit.designer) shoe.designer = hit.designer;
+            if (hit.upper_material) shoe.upperMaterial = hit.upper_material;
+            if (hit.midsole) shoe.midsole = hit.midsole;
+            
+            // Release and pricing data
+            if (hit.release_date) shoe.release_date = hit.release_date;
+            if (hit.release_year) shoe.release_year = hit.release_year;
+            if (hit.release_month) shoe.release_month = hit.release_month;
+            if (hit.retail_price_cents_usd) shoe.retailPrice = hit.retail_price_cents_usd / 100;
 
             // Store raw details for reference
             shoe.flightclubDetails = data.results[0];

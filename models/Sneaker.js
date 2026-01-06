@@ -38,6 +38,36 @@ var SneakerSchema = new Schema({
     flightclubDetails: {},
     stockxDetails: {},
     colorway: String,
+    
+    // Product specifications
+    upperMaterial: String,
+    midsole: String,
+    release_year: Number,
+    release_month: Number,
+    
+    // StockX market data
+    sales_last_72: Number,
+    deadstock_sold: Number,
+    total_dollars: Number,
+    
+    // Image collections from different sources
+    goatImages: {
+        grid_picture_url: String,
+        grid_glow_picture_url: String,
+        grid_display_picture_url: String,
+        main_picture_url: String,
+        main_glow_picture_url: String,
+        main_display_picture_url: String,
+        original_picture_url: String
+    },
+    stockxImages: {
+        imageUrl: String,
+        smallImageUrl: String,
+        thumbUrl: String,
+        thumbnail_url: String,
+        gallery: [String]
+    },
+    
     resellLinks: {
         stockX: String,
         goat: String,

@@ -97,18 +97,35 @@ module.exports = {
             }
 
             // Extract metadata
-            shoe.category = hit.category || shoe.category;
-            shoe.designer = hit.designer || shoe.designer;
-            shoe.details = hit.details || shoe.details;
-            shoe.grid_picture_url = hit.grid_picture_url || shoe.grid_picture_url;
-            shoe.name = hit.name || shoe.name;
-            shoe.nickname = hit.nickname || shoe.nickname;
-            shoe.release_date = hit.release_date || shoe.release_date;
-            shoe.silhouette = hit.silhouette || shoe.silhouette;
-            shoe.size_brand = hit.size_brand || shoe.size_brand;
-            shoe.story_html = hit.story_html || shoe.story_html;
-            shoe.story = hit.story || shoe.story;
-            shoe.goatProductId = hit.product_template_id;
+            if (hit.category) shoe.category = hit.category;
+            if (hit.designer) shoe.designer = hit.designer;
+            if (hit.details) shoe.details = hit.details;
+            if (hit.name) shoe.name = hit.name;
+            if (hit.nickname) shoe.nickname = hit.nickname;
+            if (hit.silhouette) shoe.silhouette = hit.silhouette;
+            if (hit.size_brand) shoe.size_brand = hit.size_brand;
+            if (hit.story_html) shoe.story_html = hit.story_html;
+            if (hit.story) shoe.story = hit.story;
+            if (hit.product_template_id) shoe.goatProductId = hit.product_template_id;
+            
+            // Release and pricing data
+            if (hit.release_date) shoe.release_date = hit.release_date;
+            if (hit.release_year) shoe.release_year = hit.release_year;
+            if (hit.release_month) shoe.release_month = hit.release_month;
+            if (hit.retail_price_cents_usd) shoe.retailPrice = hit.retail_price_cents_usd / 100;
+            if (hit.upper_material) shoe.upperMaterial = hit.upper_material;
+            if (hit.midsole) shoe.midsole = hit.midsole;
+            
+            // All 7 GOAT image URLs for different resolutions and effects
+            shoe.goatImages = {
+                grid_picture_url: hit.grid_picture_url || null,
+                grid_glow_picture_url: hit.grid_glow_picture_url || null,
+                grid_display_picture_url: hit.grid_display_picture_url || null,
+                main_picture_url: hit.main_picture_url || null,
+                main_glow_picture_url: hit.main_glow_picture_url || null,
+                main_display_picture_url: hit.main_display_picture_url || null,
+                original_picture_url: hit.original_picture_url || null
+            };
 
             // Build product URL
             if (hit.slug) {
@@ -116,11 +133,12 @@ module.exports = {
             }
 
             // Add main image to images array (imageLinks handled by getPictures)
-            if (hit.grid_picture_url) {
+            // Use main_picture_url for higher resolution (750px vs 375px grid)
+            if (hit.main_picture_url) {
                 shoe.images = shoe.images || [];
 
                 shoe.images.push({
-                    url: hit.grid_picture_url,
+                    url: hit.main_picture_url,
                     angle: 'main',
                     source: 'goat'
                 });
