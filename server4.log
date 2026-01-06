@@ -1,0 +1,10 @@
+
+> sneaks-api@1.1.1 start
+> node index.js
+
+Sneaks app listening on port 8080
+Environment: development
+Health check: http://localhost:8080/health
+[FlightClub] Fetching images for CT8012-047, base URL: https://cdn.flightclub.com/TEMPLATE/479033/1.jpg
+[FlightClub] Found 2 images for CT8012-047
+GOAT pictures fetch failed for 'CT8012-047': Response code 403 (Forbidden)

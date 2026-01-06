@@ -85,7 +85,7 @@ module.exports = (app) => {
             if (findError || !shoe) {
                 return response.notFound(res, "Product Not Found");
             }
-            
+
             // Use the styleID to fetch prices
             sneaks.getProductPrices(shoe.styleID.toUpperCase(), function (error, products) {
                 if (error) {

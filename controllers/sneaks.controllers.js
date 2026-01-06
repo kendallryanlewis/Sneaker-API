@@ -117,13 +117,23 @@ module.exports = class Sneaks {
                 return callback(new Error('No products found'), null);
             }
 
-            // Fetch links for all scrapers in parallel with individual error handling
+            // Fetch links for all scrapers in parallel first
             await Promise.all(
                 products.map(async (shoe) => {
                     await Promise.allSettled([
-                        promisifyWithTimeout(flightClubScraper.getLink, shoe, 10000).catch(() => { }),
-                        promisifyWithTimeout(stadiumGoodsScraper.getLink, shoe, 10000).catch(() => { }),
-                        promisifyWithTimeout(goatScraper.getLink, shoe, 10000).catch(() => { })
+                        promisifyWithTimeout(flightClubScraper.getLink, shoe, 10000),
+                        promisifyWithTimeout(stadiumGoodsScraper.getLink, shoe, 10000),
+                        promisifyWithTimeout(goatScraper.getLink, shoe, 10000)
+                    ]);
+                })
+            );
+
+            // Then fetch pictures (needs the links from above)
+            await Promise.all(
+                products.map(async (shoe) => {
+                    await Promise.allSettled([
+                        promisifyWithTimeout(goatScraper.getPictures, shoe, 15000),
+                        promisifyWithTimeout(flightClubScraper.getPictures, shoe, 15000)
                     ]);
                 })
             );
@@ -171,6 +181,7 @@ module.exports = class Sneaks {
                     promisifyWithTimeout(flightClubScraper.getPrices, shoe, 15000).catch(() => { }),
                     promisifyWithTimeout(goatScraper.getPrices, shoe, 15000).catch(() => { }),
                     promisifyWithTimeout(goatScraper.getPictures, shoe, 15000).catch(() => { }),
+                    promisifyWithTimeout(flightClubScraper.getPictures, shoe, 15000).catch(() => { }),
                     promisifyWithTimeout(stockXScraper.getPrices, shoe, 15000).catch(() => { }),
                     promisifyWithTimeout(stadiumGoodsScraper.getPrices, shoe, 15000).catch(() => { })
                 ]);
@@ -209,7 +220,7 @@ module.exports = class Sneaks {
         try {
             // Determine if this is a UUID (object ID) or style ID
             const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-            
+
             let searchParam;
             if (isUUID) {
                 // StockX objectID - need to search by it
@@ -231,7 +242,7 @@ module.exports = class Sneaks {
                 }
 
                 const shoe = products[0];
-                
+
                 // Verify we got the right product
                 if (shoe.styleID.toLowerCase() !== searchParam.toLowerCase()) {
                     return callback(new Error('No matching product found'), null);

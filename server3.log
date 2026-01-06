@@ -1,0 +1,8 @@
+
+> sneaks-api@1.1.1 start
+> node index.js
+
+Sneaks app listening on port 8080
+Environment: development
+Health check: http://localhost:8080/health
+[getProducts] Processing CT8012-047, has flightclubDetails: false

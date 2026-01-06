@@ -10,6 +10,7 @@
  * 3. Scraper Functions
  *    3.1 getLink() - Fetch Flight Club product link and metadata
  *    3.2 getPrices() - Fetch size-based pricing via GraphQL
+ *    3.3 getPictures() - Fetch multiple product images by checking incremented URLs
  * 
  * ============================================================================
  */
@@ -258,6 +259,77 @@ module.exports = {
             callback(null, shoe);
         } catch (error) {
             console.warn(`FlightClub price fetch failed for ${shoe.styleID}: ${error.message}`);
+            callback();
+        }
+    },
+
+    /**
+     * 3.3 GET PICTURES
+     * 
+     * Fetches multiple product images from Flight Club by checking incremented URLs.
+     * Flight Club uses a pattern: /TEMPLATE/{id}/1.jpg, /TEMPLATE/{id}/2.jpg, etc.
+     * 
+     * @param {Object} shoe - Sneaker object with flightclubDetails
+     * @param {Function} callback - Callback() called on completion
+     * 
+     * @example
+     * getPictures(shoe, () => {
+     *   console.log(shoe.imageLinks); // Multiple Flight Club images
+     * });
+     */
+    getPictures: async function (shoe, callback) {
+        if (!shoe.flightclubDetails?.hits?.[0]?.grid_picture_url) {
+            return callback();
+        }
+
+        try {
+            const baseUrl = shoe.flightclubDetails.hits[0].grid_picture_url;
+            
+            // Extract the template ID from URL pattern: https://cdn.flightclub.com/TEMPLATE/479033/1.jpg
+            const urlMatch = baseUrl.match(/(.+\/TEMPLATE\/\d+\/)(\d+)(\.\w+)$/);
+            if (!urlMatch) {
+                console.warn(`Could not parse Flight Club image URL pattern: ${baseUrl}`);
+                return callback();
+            }
+
+            const [, urlBase, , extension] = urlMatch;
+            
+            // Initialize arrays if they don't exist
+            shoe.imageLinks = shoe.imageLinks || [];
+            shoe.images = shoe.images || [];
+
+            const angleNames = ['main', 'side', 'back', 'top', 'bottom', 'detail', 'alternate'];
+            const maxImages = 10; // Reasonable limit to avoid endless checking
+
+            // Check for images starting from 1
+            for (let i = 1; i <= maxImages; i++) {
+                const imageUrl = `${urlBase}${i}${extension}`;
+                
+                try {
+                    // Quick HEAD request to check if image exists
+                    await got.head(imageUrl, {
+                        timeout: 5000,
+                        retry: { limit: 0 }
+                    });
+
+                    // Image exists, add it to arrays
+                    shoe.imageLinks.push(imageUrl);
+                    shoe.images.push({
+                        url: imageUrl,
+                        angle: angleNames[i - 1] || `angle_${i}`,
+                        source: 'flightclub'
+                    });
+                } catch (error) {
+                    // 404 or error - no more images
+                    if (error.response?.statusCode === 404 || error.code === 'ETIMEDOUT') {
+                        break;
+                    }
+                }
+            }
+
+            callback();
+        } catch (error) {
+            console.warn(`FlightClub picture fetch failed for ${shoe.styleID}: ${error.message}`);
             callback();
         }
     }
