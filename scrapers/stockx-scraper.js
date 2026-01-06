@@ -188,14 +188,17 @@ module.exports = {
                     shoe.lowest_ask = hit.lowest_ask || null;
                     shoe.last_sale = hit.last_sale || null;
 
-                    // Add main image to images array
+                    // Add main image to images array and imageLinks
                     if (hit.media && hit.media.imageUrl) {
                         shoe.images = shoe.images || [];
+                        shoe.imageLinks = shoe.imageLinks || [];
+                        
                         shoe.images.push({
                             url: hit.media.imageUrl,
                             angle: 'main',
                             source: 'stockx'
                         });
+                        shoe.imageLinks.push(hit.media.imageUrl);
                     }
 
                     // Set release status based on availability
@@ -386,7 +389,7 @@ module.exports = {
             }
 
             const hit = json.hits[0];
-            
+
             return {
                 styleID: hit.style_id || hit.styleID,
                 shoeName: hit.name,

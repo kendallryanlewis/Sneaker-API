@@ -115,14 +115,17 @@ module.exports = {
                 shoe.resellLinks.goat = `https://www.goat.com/sneakers/${hit.slug}`;
             }
 
-            // Add main image to images array
+            // Add main image to images array and imageLinks
             if (hit.grid_picture_url) {
                 shoe.images = shoe.images || [];
+                shoe.imageLinks = shoe.imageLinks || [];
+                
                 shoe.images.push({
                     url: hit.grid_picture_url,
                     angle: 'main',
                     source: 'goat'
                 });
+                shoe.imageLinks.push(hit.grid_picture_url);
             }
 
             // Set release status based on availability
