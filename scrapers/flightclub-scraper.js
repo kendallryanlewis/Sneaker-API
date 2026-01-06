@@ -282,6 +282,11 @@ module.exports = {
             return callback();
         }
 
+        // If GOAT already populated imageLinks, don't add Flight Club images
+        if (shoe._goatImagesPopulated) {
+            return callback();
+        }
+
         try {
             const baseUrl = shoe.flightclubDetails.hits[0].grid_picture_url;
             
@@ -299,7 +304,7 @@ module.exports = {
             shoe.images = shoe.images || [];
 
             const angleNames = ['main', 'side', 'back', 'top', 'bottom', 'detail', 'alternate'];
-            const maxImages = 10; // Reasonable limit to avoid endless checking
+            const maxImages = 4; // Get images 1-4 only
 
             // Check for images starting from 1
             for (let i = 1; i <= maxImages; i++) {

@@ -285,13 +285,16 @@ module.exports = {
 
             const pictures = json.productTemplateExternalPictures;
             if (!pictures || !Array.isArray(pictures)) {
-                console.warn(`No pictures found for ${shoe.styleID} on GOAT`);
+                console.warn(`No GOAT pictures found for ${shoe.styleID}`);
                 return callback();
             }
 
-            // Initialize arrays if they don't exist
-            shoe.imageLinks = shoe.imageLinks || [];
+            console.log(`[GOAT] Found ${pictures.length} pictures for ${shoe.styleID}`);
+
+            // If GOAT has images, use ONLY GOAT images in imageLinks (clear other scrapers)
+            shoe.imageLinks = [];
             shoe.images = shoe.images || [];
+            shoe._goatImagesPopulated = true; // Flag to prevent other scrapers from adding to imageLinks
 
             // Select specific image indices for different angles
             // Indices: 0 (main), 2 (side), 5 (back), 7 (detail), 3 (alternate)
