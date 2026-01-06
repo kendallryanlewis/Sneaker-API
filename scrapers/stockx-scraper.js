@@ -188,17 +188,15 @@ module.exports = {
                     shoe.lowest_ask = hit.lowest_ask || null;
                     shoe.last_sale = hit.last_sale || null;
 
-                    // Add main image to images array and imageLinks
+                    // Add main image to images array (imageLinks handled by getPictures)
                     if (hit.media && hit.media.imageUrl) {
                         shoe.images = shoe.images || [];
-                        shoe.imageLinks = shoe.imageLinks || [];
-                        
+
                         shoe.images.push({
                             url: hit.media.imageUrl,
                             angle: 'main',
                             source: 'stockx'
                         });
-                        shoe.imageLinks.push(hit.media.imageUrl);
                     }
 
                     // Set release status based on availability
