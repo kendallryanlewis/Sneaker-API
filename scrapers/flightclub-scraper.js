@@ -120,14 +120,14 @@ module.exports = {
             if (hit.story) {
                 shoe.description = hit.story;
             }
-            
+
             // Product details
             if (hit.nickname) shoe.nickname = hit.nickname;
             if (hit.silhouette) shoe.silhouette = hit.silhouette;
             if (hit.designer) shoe.designer = hit.designer;
             if (hit.upper_material) shoe.upperMaterial = hit.upper_material;
             if (hit.midsole) shoe.midsole = hit.midsole;
-            
+
             // Release and pricing data
             if (hit.release_date) shoe.release_date = hit.release_date;
             if (hit.release_year) shoe.release_year = hit.release_year;
@@ -326,7 +326,7 @@ module.exports = {
             // Images that don't exist will just fail to load in the frontend
             for (let i = 1; i <= maxImages; i++) {
                 const imageUrl = `${urlBase}${i}${extension}`;
-                
+
                 shoe.imageLinks.push(imageUrl);
                 shoe.images.push({
                     url: imageUrl,

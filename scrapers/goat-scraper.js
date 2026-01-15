@@ -107,7 +107,7 @@ module.exports = {
             if (hit.story_html) shoe.story_html = hit.story_html;
             if (hit.story) shoe.story = hit.story;
             if (hit.product_template_id) shoe.goatProductId = hit.product_template_id;
-            
+
             // Release and pricing data
             if (hit.release_date) shoe.release_date = hit.release_date;
             if (hit.release_year) shoe.release_year = hit.release_year;
@@ -115,7 +115,7 @@ module.exports = {
             if (hit.retail_price_cents_usd) shoe.retailPrice = hit.retail_price_cents_usd / 100;
             if (hit.upper_material) shoe.upperMaterial = hit.upper_material;
             if (hit.midsole) shoe.midsole = hit.midsole;
-            
+
             // All 7 GOAT image URLs for different resolutions and effects
             shoe.goatImages = {
                 grid_picture_url: hit.grid_picture_url || null,
