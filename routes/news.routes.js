@@ -6,9 +6,12 @@
  * 1. Configuration & Dependencies
  * 2. News Endpoints
  *    2.1 GET /news/latest - Latest sneaker news from multiple sources
- *    2.2 GET /news/sneakernews - SneakerNews articles
- *    2.3 GET /news/solecollector - Sole Collector featured articles
- *    2.4 GET /news/complex - Complex sneaker news
+ *    2.2 GET /news/sneakernews - SneakerNews articles (all)
+ *    2.3 GET /news/sneakernews/popular - SneakerNews popular articles
+ *    2.4 GET /news/sneakernews/category/:category - SneakerNews by category
+ *    2.5 GET /news/sneakernews/search?q=query - Search SneakerNews
+ *    2.6 GET /news/solecollector - Sole Collector featured articles
+ *    2.7 GET /news/complex - Complex sneaker news
  * 3. Release Endpoints
  *    3.1 GET /news/releases/upcoming - Upcoming sneaker releases
  *    3.2 GET /news/releases/snkrs - Nike SNKRS upcoming releases
@@ -21,6 +24,7 @@ const cheerio = require('cheerio');
 const rateLimit = require('express-rate-limit');
 const cache = require('../utils/cache');
 const response = require('../utils/response');
+const sneakerNewsScraper = require('../scrapers/sneakernews-scraper');
 
 // ============================================================================
 // 1. CONFIGURATION & DEPENDENCIES
@@ -66,37 +70,15 @@ module.exports = (app) => {
             return response.success(res, cached, { count: cached.length, source: 'aggregated', cached: true });
         }
 
-        try {
-            const articles = [];
-            const url = 'https://sneakernews.com/';
-            const axiosResponse = await axios(url);
-            const html = axiosResponse.data;
-            const $ = cheerio.load(html);
-
-            $('.post-box', html).each(function () {
-                const title = $(this).find('.post-content').find('h4').find('a').text().trim();
-                const image = $(this).find('a').find('img').attr('src');
-                const articleUrl = $(this).find('a').attr('href');
-                const category = $(this).find('.post-cat').text().trim();
-
-                if (title && articleUrl) {
-                    articles.push({
-                        title,
-                        image: image || null,
-                        url: articleUrl,
-                        category: category || 'Sneakers',
-                        source: 'SneakerNews',
-                        publishedAt: new Date().toISOString()
-                    });
-                }
-            });
+        sneakerNewsScraper.getLatestNews((error, articles) => {
+            if (error) {
+                console.error('Error fetching latest news:', error.message);
+                return response.serverError(res, 'Failed to fetch latest news', error.message);
+            }
 
             cache.set(cacheKey, articles, 1800); // Cache for 30 minutes
             return response.success(res, articles, { count: articles.length, source: 'aggregated', cached: false });
-        } catch (error) {
-            console.error('Error fetching latest news:', error.message);
-            return response.serverError(res, 'Failed to fetch latest news', error.message);
-        }
+        });
     });
 
     /**
@@ -116,57 +98,110 @@ module.exports = (app) => {
             return response.success(res, cached, { count: cached.length, source: 'SneakerNews', cached: true });
         }
 
-        try {
-            const articles = [];
-            const url = 'https://sneakernews.com/';
-            const axiosResponse = await axios(url);
-            const html = axiosResponse.data;
-            const $ = cheerio.load(html);
+        sneakerNewsScraper.getAllNews((error, result) => {
+            if (error) {
+                console.error('Error fetching SneakerNews:', error.message);
+                return response.serverError(res, 'Failed to fetch SneakerNews articles', error.message);
+            }
 
-            // Popular posts
-            $('.single_popular_posts', html).each(function () {
-                const title = $(this).find('.post-title').text().trim();
-                const image = $(this).find('a').find('img').attr('src');
-                const articleUrl = $(this).find('a').attr('href');
-
-                if (title && articleUrl) {
-                    articles.push({
-                        title,
-                        image: image || null,
-                        url: articleUrl,
-                        type: 'popular',
-                        source: 'SneakerNews'
-                    });
-                }
-            });
-
-            // Latest posts
-            $('.post-box', html).each(function () {
-                const title = $(this).find('.post-content').find('h4').find('a').text().trim();
-                const image = $(this).find('a').find('img').attr('src');
-                const articleUrl = $(this).find('a').attr('href');
-
-                if (title && articleUrl) {
-                    articles.push({
-                        title,
-                        image: image || null,
-                        url: articleUrl,
-                        type: 'latest',
-                        source: 'SneakerNews'
-                    });
-                }
-            });
-
+            const articles = result.combined || [];
             cache.set(cacheKey, articles, 1800); // Cache for 30 minutes
             return response.success(res, articles, { count: articles.length, source: 'SneakerNews', cached: false });
-        } catch (error) {
-            console.error('Error fetching SneakerNews:', error.message);
-            return response.serverError(res, 'Failed to fetch SneakerNews articles', error.message);
-        }
+        });
     });
 
     /**
-     * 2.3 GET SOLE COLLECTOR FEATURED
+     * 2.3 GET SNEAKERNEWS POPULAR
+     * 
+     * Fetches only popular/trending articles from SneakerNews.com
+     * 
+     * Cache: 30 minutes
+     * Response: Array of popular articles
+     */
+    app.get('/news/sneakernews/popular', async (req, res) => {
+        const cacheKey = 'news:sneakernews:popular';
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+            return response.success(res, cached, { count: cached.length, source: 'SneakerNews', cached: true });
+        }
+
+        sneakerNewsScraper.getPopularNews((error, articles) => {
+            if (error) {
+                console.error('Error fetching SneakerNews popular:', error.message);
+                return response.serverError(res, 'Failed to fetch SneakerNews popular articles', error.message);
+            }
+
+            cache.set(cacheKey, articles, 1800); // Cache for 30 minutes
+            return response.success(res, articles, { count: articles.length, source: 'SneakerNews', cached: false });
+        });
+    });
+
+    /**
+     * 2.4 GET SNEAKERNEWS BY CATEGORY
+     * 
+     * Fetches articles from a specific category on SneakerNews.com
+     * Categories: releases, jordan, nike, adidas, etc.
+     * 
+     * Cache: 30 minutes
+     * Response: Array of category-specific articles
+     */
+    app.get('/news/sneakernews/category/:category', async (req, res) => {
+        const { category } = req.params;
+        const cacheKey = `news:sneakernews:category:${category}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+            return response.success(res, cached, { count: cached.length, source: 'SneakerNews', category, cached: true });
+        }
+
+        sneakerNewsScraper.getCategoryNews(category, (error, articles) => {
+            if (error) {
+                console.error(`Error fetching SneakerNews ${category}:`, error.message);
+                return response.serverError(res, `Failed to fetch SneakerNews ${category} articles`, error.message);
+            }
+
+            cache.set(cacheKey, articles, 1800); // Cache for 30 minutes
+            return response.success(res, articles, { count: articles.length, source: 'SneakerNews', category, cached: false });
+        });
+    });
+
+    /**
+     * 2.5 SEARCH SNEAKERNEWS
+     * 
+     * Searches SneakerNews.com for specific keywords
+     * Query parameter: q (search query)
+     * 
+     * Cache: 30 minutes
+     * Response: Array of matching articles
+     */
+    app.get('/news/sneakernews/search', async (req, res) => {
+        const query = req.query.q;
+
+        if (!query) {
+            return response.badRequest(res, 'Search query is required', 'Please provide a search query using ?q=yourquery');
+        }
+
+        const cacheKey = `news:sneakernews:search:${query}`;
+        const cached = cache.get(cacheKey);
+
+        if (cached) {
+            return response.success(res, cached, { count: cached.length, source: 'SneakerNews', query, cached: true });
+        }
+
+        sneakerNewsScraper.searchNews(query, (error, articles) => {
+            if (error) {
+                console.error(`Error searching SneakerNews for "${query}":`, error.message);
+                return response.serverError(res, 'Failed to search SneakerNews', error.message);
+            }
+
+            cache.set(cacheKey, articles, 1800); // Cache for 30 minutes
+            return response.success(res, articles, { count: articles.length, source: 'SneakerNews', query, cached: false });
+        });
+    });
+
+    /**
+     * 2.6 GET SOLE COLLECTOR FEATURED
      * 
      * Fetches featured articles from Sole Collector
      * Includes big features and latest stories

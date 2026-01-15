@@ -153,6 +153,181 @@ GET localhost:8080/home
 
 ---
 
+### News & Release Endpoints
+
+#### Get Latest News
+Returns the latest sneaker news articles from SneakerNews.
+```
+GET localhost:8080/news/latest
+```
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "title": "Air Jordan 1 High 'Lost and Found' Release Info",
+      "image": "https://...",
+      "url": "https://sneakernews.com/...",
+      "category": "Releases",
+      "publishedAt": "January 14, 2026",
+      "excerpt": "The Air Jordan 1 High 'Lost and Found'...",
+      "source": "SneakerNews",
+      "type": "latest"
+    }
+  ],
+  "meta": {
+    "count": 20,
+    "source": "aggregated",
+    "cached": false
+  }
+}
+```
+**Cache:** 30 minutes
+
+#### Get All SneakerNews Articles
+Returns all SneakerNews articles (latest + popular combined).
+```
+GET localhost:8080/news/sneakernews
+```
+**Response:** Array of articles with latest and popular posts combined, removing duplicates
+**Cache:** 30 minutes
+
+#### Get Popular SneakerNews
+Returns only popular/trending articles from SneakerNews.
+```
+GET localhost:8080/news/sneakernews/popular
+```
+**Response:** Array of popular articles
+**Cache:** 30 minutes
+
+#### Get SneakerNews by Category
+Returns articles from a specific category.
+```
+GET localhost:8080/news/sneakernews/category/:category
+```
+**Examples:**
+```
+GET localhost:8080/news/sneakernews/category/releases
+GET localhost:8080/news/sneakernews/category/jordan
+GET localhost:8080/news/sneakernews/category/nike
+GET localhost:8080/news/sneakernews/category/adidas
+```
+**Response:** Array of category-specific articles
+**Cache:** 30 minutes
+
+#### Search SneakerNews
+Search for specific articles on SneakerNews.
+```
+GET localhost:8080/news/sneakernews/search?q=query
+```
+**Query Parameters:**
+- `q` (required): Search query
+
+**Examples:**
+```
+GET localhost:8080/news/sneakernews/search?q=yeezy
+GET localhost:8080/news/sneakernews/search?q=dunk
+```
+**Response:** Array of matching articles
+**Cache:** 30 minutes
+
+#### Get Sole Collector Featured
+Returns featured articles from Sole Collector.
+```
+GET localhost:8080/news/solecollector
+```
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "title": "Nike Dunk Low 'Panda' Restock",
+      "image": "https://...",
+      "url": "https://solecollector.com/...",
+      "type": "featured",
+      "source": "SoleCollector"
+    }
+  ],
+  "meta": {
+    "count": 15,
+    "source": "SoleCollector",
+    "cached": false
+  }
+}
+```
+**Cache:** 30 minutes
+
+#### Get Complex Sneaker News
+Returns sneaker news from Complex.
+```
+GET localhost:8080/news/complex
+```
+**Response:** Array of Complex sneaker articles
+**Cache:** 30 minutes
+
+#### Get Upcoming Releases
+Returns upcoming sneaker releases from Nice Kicks.
+```
+GET localhost:8080/news/releases/upcoming
+```
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "title": "Air Jordan 4 'Military Black'",
+      "image": "https://...",
+      "url": "https://nicekicks.com/...",
+      "releaseDate": {
+        "month": "May",
+        "day": "6",
+        "display": "May 6"
+      },
+      "details": "Release info and pricing",
+      "source": "NiceKicks"
+    }
+  ],
+  "meta": {
+    "count": 25,
+    "source": "NiceKicks",
+    "cached": false
+  }
+}
+```
+**Cache:** 1 hour
+
+#### Get Nike SNKRS Releases
+Returns upcoming releases from Nike SNKRS.
+```
+GET localhost:8080/news/releases/snkrs
+```
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "title": "Air Max 1 '86 OG G University Red",
+      "releaseDate": "Jan 15",
+      "image": "https://...",
+      "url": "https://www.nike.com/launch/...",
+      "source": "Nike SNKRS"
+    }
+  ],
+  "meta": {
+    "count": 30,
+    "source": "Nike SNKRS",
+    "cached": false
+  }
+}
+```
+**Cache:** 1 hour
+
+---
+
 ### Utility Endpoints
 
 #### Health Check
@@ -353,6 +528,32 @@ axios.get('http://localhost:8080/id/yeezy-boost-350-v2')
     console.log(`Images: ${product.images.length}`);
     console.log(`Release Status: ${product.releaseStatus}`);
     console.log(`Available Sizes:`, Object.keys(product.sizeAvailability));
+  });
+
+// Get latest sneaker news
+axios.get('http://localhost:8080/news/latest')
+  .then(response => {
+    const articles = response.data.data;
+    console.log(`Found ${response.data.meta.count} articles`);
+    articles.forEach(article => {
+      console.log(`${article.title} - ${article.source}`);
+    });
+  });
+
+// Search SneakerNews
+axios.get('http://localhost:8080/news/sneakernews/search?q=jordan')
+  .then(response => {
+    const articles = response.data.data;
+    console.log(`Found ${articles.length} articles about Jordan`);
+  });
+
+// Get upcoming releases
+axios.get('http://localhost:8080/news/releases/upcoming')
+  .then(response => {
+    const releases = response.data.data;
+    releases.forEach(release => {
+      console.log(`${release.title} - ${release.releaseDate.display}`);
+    });
   });
 ```
 
