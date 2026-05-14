@@ -296,12 +296,6 @@ module.exports = {
             return callback();
         }
 
-        // If GOAT already populated imageLinks, don't add Flight Club images
-        if (shoe._goatImagesPopulated) {
-            console.log(`[FlightClub] Skipping ${shoe.styleID} - GOAT already populated`);
-            return callback();
-        }
-
         try {
             const baseUrl = shoe.flightclubDetails.hits[0].grid_picture_url;
             console.log(`[FlightClub] Starting getPictures for ${shoe.styleID}, base: ${baseUrl}`);
@@ -315,25 +309,27 @@ module.exports = {
 
             const [, urlBase, , extension] = urlMatch;
 
-            // Initialize arrays if they don't exist
             shoe.imageLinks = shoe.imageLinks || [];
             shoe.images = shoe.images || [];
 
+            // Deduplicate against images already collected from other sources
+            const existingUrls = new Set(shoe.imageLinks);
             const angleNames = ['main', 'side', 'back', 'top'];
-            const maxImages = 4; // Get images 1-4 only
 
-            // Add images 1-4 without checking (Flight Club blocks HEAD requests)
-            // Images that don't exist will just fail to load in the frontend
-            for (let i = 1; i <= maxImages; i++) {
+            // Images 1-4 (Flight Club blocks HEAD requests so we add without pre-checking)
+            for (let i = 1; i <= 4; i++) {
                 const imageUrl = `${urlBase}${i}${extension}`;
-
-                shoe.imageLinks.push(imageUrl);
-                shoe.images.push({
-                    url: imageUrl,
-                    angle: angleNames[i - 1] || `angle_${i}`,
-                    source: 'flightclub'
-                });
+                if (!existingUrls.has(imageUrl)) {
+                    existingUrls.add(imageUrl);
+                    shoe.imageLinks.push(imageUrl);
+                    shoe.images.push({
+                        url: imageUrl,
+                        angle: angleNames[i - 1] || `angle_${i}`,
+                        source: 'flightclub'
+                    });
+                }
             }
+            console.log(`[FlightClub] Added up to 4 images for ${shoe.styleID}`);
 
             callback();
         } catch (error) {

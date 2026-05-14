@@ -78,17 +78,72 @@ const retryWithBackoff = async (fn, retries = 3, delay = 1000) => {
         try {
             return await fn();
         } catch (error) {
-            // Don't retry on 403 Forbidden - it won't help
-            if (error.response && error.response.statusCode === 403) {
-                console.warn('Received 403 Forbidden - StockX may be blocking requests');
-                throw error;
-            }
             if (i === retries - 1) throw error;
             const backoffDelay = delay * Math.pow(2, i);
             console.log(`Retry ${i + 1}/${retries} after ${backoffDelay}ms...`);
             await new Promise(resolve => setTimeout(resolve, backoffDelay));
         }
     }
+};
+
+// Algolia hosts to try in order — DSN routes to the nearest datacenter,
+// then fall back to individual cluster nodes.
+const STOCKX_ALGOLIA_HOSTS = [
+    'xw7sbct9v6-dsn.algolia.net',
+    'xw7sbct9v6-1.algolianet.com',
+    'xw7sbct9v6-2.algolianet.com',
+    'xw7sbct9v6-3.algolianet.com',
+];
+
+// The search key is a public browser key StockX embeds in their frontend JS.
+// It rotates periodically — set STOCKX_ALGOLIA_KEY in .env when it does.
+const STOCKX_ALGOLIA_KEY = process.env.STOCKX_ALGOLIA_KEY || '6b5e76b49705eb9f51a06d3c82f7acee';
+const STOCKX_ALGOLIA_SUFFIX = `/1/indexes/products/query?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%20(lite)%203.35.1&x-algolia-application-id=XW7SBCT9V6&x-algolia-api-key=${STOCKX_ALGOLIA_KEY}`;
+
+/**
+ * Sends a POST to the StockX Algolia search endpoint, automatically rotating
+ * through cluster hosts when a 403 is returned.
+ *
+ * @param {String} params - Algolia params string, e.g. "query=jordan&hitsPerPage=10"
+ * @returns {Promise<Object>} Parsed JSON response body
+ */
+const stockxAlgoliaQuery = async (params) => {
+    const body = JSON.stringify({ params });
+    // If no custom key is configured, only try one host — the key is revoked
+    // so rotating hosts won't help and wastes time.
+    const hosts = process.env.STOCKX_ALGOLIA_KEY
+        ? STOCKX_ALGOLIA_HOSTS
+        : [STOCKX_ALGOLIA_HOSTS[0]];
+    let lastError;
+    for (const host of hosts) {
+        try {
+            const response = await got.post(`https://${host}${STOCKX_ALGOLIA_SUFFIX}`, {
+                headers: {
+                    'User-Agent': getRandomUserAgent(),
+                    'accept': 'application/json',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'content-type': 'application/json',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'cross-site',
+                    'referer': 'https://stockx.com/',
+                    'origin': 'https://stockx.com',
+                },
+                body,
+                timeout: { request: 15000 },
+                retry: { limit: 0 },
+            });
+            return JSON.parse(response.body);
+        } catch (error) {
+            lastError = error;
+            // On 403 try the next host; on any other error bail immediately
+            if (!error.response || error.response.statusCode !== 403) {
+                throw error;
+            }
+            console.warn(`StockX 403 on ${host}, trying next host...`);
+        }
+    }
+    throw lastError;
 };
 
 // ============================================================================
@@ -121,26 +176,12 @@ const retryWithBackoff = async (fn, retries = 3, delay = 1000) => {
 module.exports = {
     getProductsAndInfo: async function (key, count, callback) {
         try {
-            const response = await retryWithBackoff(async () => {
-                return await got.post('https://xw7sbct9v6-1.algolianet.com/1/indexes/products/query?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%203.32.1&x-algolia-application-id=XW7SBCT9V6&x-algolia-api-key=6b5e76b49705eb9f51a06d3c82f7acee', {
-                    headers: {
-                        'User-Agent': getRandomUserAgent(),
-                        "accept": "application/json",
-                        "accept-language": "en-US,en;q=0.9",
-                        "content-type": "application/x-www-form-urlencoded",
-                        "sec-fetch-dest": "empty",
-                        "sec-fetch-mode": "cors",
-                        "sec-fetch-site": "cross-site",
-                        "referer": "https://stockx.com/",
-                        "origin": "https://stockx.com"
-                    },
-                    body: `{"params":"query=${key}&facets=*&filters=&hitsPerPage=${count}"}`,
-                    http2: true,
-                    timeout: 15000,
-                    retry: { limit: 0 }
-                });
-            }, 3, 1000);
-            const json = JSON.parse(response.body);
+            // Skip retries entirely when using the default (revoked) key
+            const attempts = process.env.STOCKX_ALGOLIA_KEY ? 3 : 1;
+            const json = await retryWithBackoff(
+                () => stockxAlgoliaQuery(`query=${encodeURIComponent(key)}&facets=*&filters=&hitsPerPage=${count}`),
+                attempts, 1000
+            );
 
             if (!json.hits || !Array.isArray(json.hits)) {
                 throw new Error('Invalid response structure from StockX');
@@ -184,7 +225,7 @@ module.exports = {
                     shoe.objectID = hit.objectID || '';
                     shoe.thumbnail_url = hit.thumbnail_url || '';
                     shoe.imageUrl = hit.imageUrl || '';
-                    
+
                     // Market data - set as numbers
                     shoe.highest_bid = hit.highest_bid || null;
                     shoe.lowest_ask = hit.lowest_ask || null;
@@ -192,7 +233,7 @@ module.exports = {
                     shoe.sales_last_72 = hit.sales_last_72 || null;
                     shoe.deadstock_sold = hit.deadstock_sold || null;
                     shoe.total_dollars = hit.total_dollars || null;
-                    
+
                     // Product details - override initial values
                     if (hit.colorway) shoe.colorway = hit.colorway;
                     if (hit.price) shoe.retailPrice = hit.price;
@@ -207,7 +248,7 @@ module.exports = {
                             angle: 'main',
                             source: 'stockx'
                         });
-                        
+
                         // Store all StockX image sizes
                         shoe.stockxImages = {
                             imageUrl: hit.media.imageUrl,
@@ -379,27 +420,10 @@ module.exports = {
      */
     getProductByObjectId: async function (objectId) {
         try {
-            const response = await retryWithBackoff(async () => {
-                return await got.post('https://xw7sbct9v6-1.algolianet.com/1/indexes/products/query?x-algolia-agent=Algolia%20for%20vanilla%20JavaScript%203.32.1&x-algolia-application-id=XW7SBCT9V6&x-algolia-api-key=6b5e76b49705eb9f51a06d3c82f7acee', {
-                    headers: {
-                        'User-Agent': getRandomUserAgent(),
-                        "accept": "application/json",
-                        "accept-language": "en-US,en;q=0.9",
-                        "content-type": "application/x-www-form-urlencoded",
-                        "sec-fetch-dest": "empty",
-                        "sec-fetch-mode": "cors",
-                        "sec-fetch-site": "cross-site",
-                        "referer": "https://stockx.com/",
-                        "origin": "https://stockx.com"
-                    },
-                    body: `{"params":"filters=objectID:${objectId}&hitsPerPage=1"}`,
-                    http2: true,
-                    timeout: 15000,
-                    retry: { limit: 0 }
-                });
-            }, 3, 1000);
-
-            const json = JSON.parse(response.body);
+            const json = await retryWithBackoff(
+                () => stockxAlgoliaQuery(`filters=objectID:${objectId}&hitsPerPage=1`),
+                3, 1000
+            );
 
             if (!json.hits || json.hits.length === 0) {
                 throw new Error(`No product found with objectID: ${objectId}`);

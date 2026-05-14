@@ -18,117 +18,84 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+// ── RSS helpers ───────────────────────────────────────────────────────────────
+
 /**
- * Get Latest News Articles
- * 
- * Scrapes the homepage for the latest sneaker news articles
- * 
- * @param {Function} callback - Callback function (error, articles)
+ * Fetch and parse an RSS/Atom feed, returning a normalised article array.
+ * Uses cheerio in xml mode — works for both RSS 2.0 and Atom.
+ */
+const fetchRss = async (feedUrl, source, type) => {
+    const res = await axios.get(feedUrl, {
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        },
+        timeout: 10000,
+    });
+
+    const $ = cheerio.load(res.data, { xmlMode: true });
+    const articles = [];
+
+    $('item').each(function () {
+        const title = $(this).find('title').first().text().trim();
+        const url = $(this).find('link').first().text().trim() ||
+            $(this).find('guid').first().text().trim();
+        const date = $(this).find('pubDate').first().text().trim() ||
+            $(this).find('dc\\:date').first().text().trim();
+        // excerpt: strip HTML tags and the WordPress copyright footer
+        const rawDesc = $(this).find('description').first().text();
+        const excerpt = rawDesc
+            .replace(/<[^>]+>/g, '')
+            .replace(/©.*$/s, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 200);
+
+        // image: try media:content/enclosure first, then extract from content:encoded CDATA
+        let image = $(this).find('media\\:content').attr('url') ||
+            $(this).find('enclosure[type^="image"]').attr('url') || null;
+        if (!image) {
+            const contentHtml = $(this).find('content\\:encoded').first().text();
+            // prefer src= on wp-content images (width-1200 or largest srcset candidate)
+            const srcsetMatch = contentHtml.match(/src="(https?:\/\/[^"]+\.(?:jpg|jpeg|png|webp|gif))"/i);
+            if (srcsetMatch) image = srcsetMatch[1];
+        }
+
+        // derive category from <category> tag
+        const category = $(this).find('category').first().text().trim() || 'Sneakers';
+
+        if (title && url) {
+            articles.push({ title, image, url, category, publishedAt: date || null, excerpt, source, type });
+        }
+    });
+
+    return articles;
+};
+
+// ── Exported functions ────────────────────────────────────────────────────────
+
+/**
+ * Get Latest News Articles — via SneakerNews RSS feed (no scraping, no 403)
  */
 const getLatestNews = async (callback) => {
     try {
-        const url = 'https://sneakernews.com/';
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            },
-            timeout: 10000
-        });
-
-        const html = response.data;
-        const $ = cheerio.load(html);
-        const articles = [];
-
-        // Latest posts from homepage
-        $('.post-box', html).each(function () {
-            const title = $(this).find('.post-content h4 a').text().trim();
-            const image = $(this).find('a img').attr('src') || $(this).find('a img').attr('data-src');
-            const articleUrl = $(this).find('a').attr('href');
-            const category = $(this).find('.post-cat').text().trim();
-            const date = $(this).find('.post-date').text().trim();
-            const excerpt = $(this).find('.post-excerpt').text().trim();
-
-            if (title && articleUrl) {
-                articles.push({
-                    title,
-                    image: image || null,
-                    url: articleUrl,
-                    category: category || 'Sneakers',
-                    publishedAt: date || null,
-                    excerpt: excerpt || null,
-                    source: 'SneakerNews',
-                    type: 'latest'
-                });
-            }
-        });
-
+        const articles = await fetchRss('https://sneakernews.com/feed/', 'SneakerNews', 'latest');
         callback(null, articles);
     } catch (error) {
-        console.error('Error scraping SneakerNews latest:', error.message);
+        console.error('Error fetching SneakerNews RSS:', error.message);
         callback(error, []);
     }
 };
 
 /**
- * Get Popular News Articles
- * 
- * Scrapes popular/trending articles from the sidebar or featured sections
- * 
- * @param {Function} callback - Callback function (error, articles)
+ * Get Popular News Articles — reuses latest RSS (no separate popular feed exists)
  */
 const getPopularNews = async (callback) => {
     try {
-        const url = 'https://sneakernews.com/';
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            },
-            timeout: 10000
-        });
-
-        const html = response.data;
-        const $ = cheerio.load(html);
-        const articles = [];
-
-        // Popular posts from sidebar
-        $('.single_popular_posts', html).each(function () {
-            const title = $(this).find('.post-title').text().trim();
-            const image = $(this).find('a img').attr('src') || $(this).find('a img').attr('data-src');
-            const articleUrl = $(this).find('a').attr('href');
-
-            if (title && articleUrl) {
-                articles.push({
-                    title,
-                    image: image || null,
-                    url: articleUrl,
-                    source: 'SneakerNews',
-                    type: 'popular'
-                });
-            }
-        });
-
-        // If popular posts not found, get featured posts
-        if (articles.length === 0) {
-            $('.featured-post', html).each(function () {
-                const title = $(this).find('h2 a, h3 a').text().trim();
-                const image = $(this).find('img').attr('src') || $(this).find('img').attr('data-src');
-                const articleUrl = $(this).find('a').first().attr('href');
-
-                if (title && articleUrl) {
-                    articles.push({
-                        title,
-                        image: image || null,
-                        url: articleUrl,
-                        source: 'SneakerNews',
-                        type: 'featured'
-                    });
-                }
-            });
-        }
-
+        const articles = await fetchRss('https://sneakernews.com/feed/', 'SneakerNews', 'popular');
         callback(null, articles);
     } catch (error) {
-        console.error('Error scraping SneakerNews popular:', error.message);
+        console.error('Error fetching SneakerNews popular RSS:', error.message);
         callback(error, []);
     }
 };

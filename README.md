@@ -559,5 +559,213 @@ axios.get('http://localhost:8080/news/releases/upcoming')
 
 ---
 
+## Deploying to Google Cloud Run
+
+The API is production-ready for Google Cloud Run. Deployments can be triggered automatically via GitHub Actions on every push to `main`, or manually from the command line.
+
+### Live Service
+
+**URL:** `https://sneaker-api-363681629994.us-central1.run.app`
+
+```bash
+# Verify the live service
+curl https://sneaker-api-363681629994.us-central1.run.app/health
+```
+
+---
+
+### Prerequisites
+
+1. **Google Cloud SDK** — [Install gcloud CLI](https://cloud.google.com/sdk/docs/install)
+2. **Docker** — Required for local builds (Cloud Run handles it automatically for remote deployments)
+3. **GitHub CLI** (optional) — `brew install gh` for managing secrets and watching workflow runs
+
+---
+
+### One-Time Setup
+
+#### 1. Authenticate and configure your project
+
+```bash
+gcloud auth login
+gcloud config set project kndl-3663b
+```
+
+#### 2. Enable required Google Cloud APIs
+
+```bash
+gcloud services enable run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  containerregistry.googleapis.com
+```
+
+#### 3. Create the GitHub Actions service account
+
+```bash
+# Create the service account
+gcloud iam service-accounts create github-actions \
+  --display-name="GitHub Actions" \
+  --project=kndl-3663b
+
+# Grant required roles
+gcloud projects add-iam-policy-binding kndl-3663b \
+  --member="serviceAccount:github-actions@kndl-3663b.iam.gserviceaccount.com" \
+  --role="roles/run.admin"
+
+gcloud projects add-iam-policy-binding kndl-3663b \
+  --member="serviceAccount:github-actions@kndl-3663b.iam.gserviceaccount.com" \
+  --role="roles/storage.admin"
+
+gcloud projects add-iam-policy-binding kndl-3663b \
+  --member="serviceAccount:github-actions@kndl-3663b.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser"
+
+gcloud projects add-iam-policy-binding kndl-3663b \
+  --member="serviceAccount:github-actions@kndl-3663b.iam.gserviceaccount.com" \
+  --role="roles/cloudbuild.builds.builder"
+
+gcloud projects add-iam-policy-binding kndl-3663b \
+  --member="serviceAccount:github-actions@kndl-3663b.iam.gserviceaccount.com" \
+  --role="roles/artifactregistry.admin"
+
+gcloud projects add-iam-policy-binding kndl-3663b \
+  --member="serviceAccount:github-actions@kndl-3663b.iam.gserviceaccount.com" \
+  --role="roles/serviceusage.serviceUsageConsumer"
+```
+
+#### 4. Create and store the service account key
+
+```bash
+# Generate the key
+gcloud iam service-accounts keys create ~/gcp-key.json \
+  --iam-account=github-actions@kndl-3663b.iam.gserviceaccount.com \
+  --project=kndl-3663b
+
+# Set GitHub repository secrets
+gh secret set GCP_PROJECT_ID --body "kndl-3663b"
+gh secret set GCP_SA_KEY < ~/gcp-key.json
+
+# Remove the local key file — never commit this
+rm ~/gcp-key.json
+```
+
+> **Alternatively**, add the secrets through the GitHub web UI:  
+> Repository → Settings → Secrets and variables → Actions → New repository secret
+
+| Secret | Value |
+|---|---|
+| `GCP_PROJECT_ID` | `kndl-3663b` |
+| `GCP_SA_KEY` | Full contents of the service account JSON key |
+
+---
+
+### Automated Deployment (GitHub Actions)
+
+Every push to the `main` branch triggers the `.github/workflows/deploy.yml` workflow, which:
+
+1. Authenticates with Google Cloud using the service account key
+2. Builds the Docker image via Cloud Build
+3. Deploys the image to Cloud Run
+4. Runs a health check against the live URL
+5. Reports the deployed service URL
+
+**Watch a deployment:**
+
+```bash
+# List recent workflow runs
+gh run list --workflow=deploy.yml
+
+# Stream a live run
+gh run watch
+
+# View logs from the last run
+gh run view --log
+```
+
+---
+
+### Manual Deployment
+
+If you need to deploy outside of GitHub Actions:
+
+```bash
+# Option 1: Direct deploy from source (Cloud Build handles Docker automatically)
+gcloud run deploy sneaker-api \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated
+
+# Option 2: Interactive deployment script (prompts for service name and region)
+./deploy-gcloud.sh
+
+# Option 3: Trigger the GitHub Actions workflow manually
+gh workflow run deploy.yml
+```
+
+---
+
+### Monitoring
+
+**Stream live logs:**
+
+```bash
+gcloud run services logs tail sneaker-api --region us-central1
+```
+
+**View recent logs:**
+
+```bash
+gcloud run services logs read sneaker-api --region us-central1 --limit=50
+```
+
+**Inspect service configuration:**
+
+```bash
+gcloud run services describe sneaker-api --region us-central1
+```
+
+**Cloud Console links:**
+- Cloud Run: https://console.cloud.google.com/run?project=kndl-3663b
+- Cloud Build history: https://console.cloud.google.com/cloud-build/builds?project=kndl-3663b
+- GitHub Actions: https://github.com/kendallryanlewis/Sneaker-API/actions
+
+---
+
+### Service Configuration
+
+| Setting | Value |
+|---|---|
+| Region | `us-central1` |
+| Memory | 512Mi |
+| CPU | 1 |
+| Min instances | 0 (scales to zero) |
+| Max instances | 10 |
+| Request timeout | 60s |
+| Authentication | Public (unauthenticated) |
+
+**Update configuration:**
+
+```bash
+gcloud run services update sneaker-api \
+  --region us-central1 \
+  --memory 1Gi \
+  --cpu 2 \
+  --max-instances 20
+```
+
+---
+
+### Cost
+
+Cloud Run only charges for actual usage. The free tier covers:
+- 2 million requests/month
+- 360,000 GiB-seconds of memory
+- 180,000 vCPU-seconds of compute
+
+The service scales to zero when idle, so there are no charges during periods of inactivity.
+
+---
+
 For more detailed information about production features, see [API-FEATURES.md](API-FEATURES.md)
 

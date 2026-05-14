@@ -144,21 +144,22 @@ module.exports = (app) => {
     //Grabs all sneakers given a keyword/parameter
     app.get('/search/:shoe', function (req, res) {
         const count = parseInt(req.query.count) || 40;
+        const page = parseInt(req.query.page) || 0;
         const keyword = req.params.shoe;
-        const cacheKey = `search:${keyword}:${count}`;
+        const cacheKey = `search:${keyword}:${count}:${page}`;
         const cached = cache.get(cacheKey);
 
         if (cached) {
-            return response.success(res, cached, { count: cached.length, keyword, cached: true });
+            return response.success(res, cached.products, { count: cached.products.length, keyword, nbHits: cached.nbHits, cached: true });
         }
 
-        sneaks.getProducts(keyword, count, function (error, products) {
+        sneaks.getProducts(keyword, count, page, function (error, products, nbHits, nbPages) {
             if (error) {
                 console.error(error);
                 return response.notFound(res, "Product Not Found");
             } else {
-                cache.set(cacheKey, products, 3600); // Cache for 1 hour
-                return response.success(res, products, { count: products.length, keyword, cached: false });
+                cache.set(cacheKey, { products, nbHits, nbPages }, 3600); // Cache for 1 hour
+                return response.success(res, products, { count: products.length, keyword, nbHits, nbPages, cached: false });
             }
         })
     });

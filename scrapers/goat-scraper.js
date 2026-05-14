@@ -96,7 +96,22 @@ module.exports = {
                 shoe.lowestResellPrice.goat = priceInCents / 100;
             }
 
-            // Extract metadata
+            // Instant-ship price (in-hand, ships immediately — distinct premium from regular)
+            if (hit.instant_ship_lowest_price_cents_usd) {
+                shoe.instantShipLowestPrice = hit.instant_ship_lowest_price_cents_usd / 100;
+            }
+
+            // Availability and demand signals
+            if (hit.has_stock != null) shoe.hasStock = hit.has_stock;
+            if (hit.number_of_related_listings != null) shoe.listingCount = hit.number_of_related_listings;
+            if (hit.is_under_retail != null) shoe.isUnderRetail = hit.is_under_retail;
+            if (hit.has_under_retail_availability != null) shoe.hasUnderRetailAvailability = hit.has_under_retail_availability;
+            if (hit.allowed_sizes) shoe.allowedSizes = hit.allowed_sizes;
+            if (hit.minimum_price_cents && hit.maximum_price_cents) {
+                shoe.priceRange = { low: hit.minimum_price_cents / 100, high: hit.maximum_price_cents / 100 };
+            }
+
+            // Product metadata
             if (hit.category) shoe.category = hit.category;
             if (hit.designer) shoe.designer = hit.designer;
             if (hit.details) shoe.details = hit.details;
@@ -107,6 +122,13 @@ module.exports = {
             if (hit.story_html) shoe.story_html = hit.story_html;
             if (hit.story) shoe.story = hit.story;
             if (hit.product_template_id) shoe.goatProductId = hit.product_template_id;
+            if (hit.gender) shoe.gender = hit.gender;
+            if (hit.activity) shoe.activity = hit.activity;
+            if (hit.season) shoe.season = hit.season;
+            if (hit.season_year) shoe.seasonYear = hit.season_year;
+            if (hit.keywords) shoe.keywords = hit.keywords;
+            if (hit.collection_slugs) shoe.collectionSlugs = hit.collection_slugs;
+            if (hit.release_date_name) shoe.releaseDateName = hit.release_date_name;
 
             // Release and pricing data
             if (hit.release_date) shoe.release_date = hit.release_date;
@@ -239,6 +261,7 @@ module.exports = {
                 shoe.sizeAvailability.set(size, price > 0);
             }
 
+            if (!shoe.resellPrices) shoe.resellPrices = {};
             shoe.resellPrices.goat = priceMap;
 
             // Add price history entry
@@ -307,30 +330,28 @@ module.exports = {
 
             console.log(`[GOAT] Found ${pictures.length} pictures for ${shoe.styleID}`);
 
-            // If GOAT has images, use ONLY GOAT images in imageLinks (clear other scrapers)
-            shoe.imageLinks = [];
+            shoe.imageLinks = shoe.imageLinks || [];
             shoe.images = shoe.images || [];
-            shoe._goatImagesPopulated = true; // Flag to prevent other scrapers from adding to imageLinks
 
-            // Select specific image indices for different angles
-            // Indices: 0 (main), 2 (side), 5 (back), 7 (detail), 3 (alternate)
-            const imageIndices = [0, 2, 5, 7, 3];
-            const angleNames = ['main', 'side', 'back', 'detail', 'alternate'];
+            // Collect every available GOAT angle (up to 12)
+            const existingUrls = new Set(shoe.imageLinks);
+            const angleLabels = ['main', 'side_1', 'side_2', 'back', 'detail_1', 'detail_2', 'top', 'heel', 'toe', 'insole', 'outsole', 'lifestyle'];
 
-            for (let i = 0; i < imageIndices.length; i++) {
-                const index = imageIndices[i];
-                const picture = pictures[index];
-                if (picture?.mainPictureUrl) {
-                    shoe.imageLinks.push(picture.mainPictureUrl);
-
-                    // Add to structured images array
+            let goatCount = 0;
+            for (let i = 0; i < Math.min(pictures.length, 12); i++) {
+                const url = pictures[i]?.mainPictureUrl;
+                if (url && !existingUrls.has(url)) {
+                    existingUrls.add(url);
+                    shoe.imageLinks.push(url);
                     shoe.images.push({
-                        url: picture.mainPictureUrl,
-                        angle: angleNames[i],
+                        url,
+                        angle: angleLabels[i] || `angle_${i}`,
                         source: 'goat'
                     });
+                    goatCount++;
                 }
             }
+            console.log(`[GOAT] Added ${goatCount} images for ${shoe.styleID}`);
 
             callback();
         } catch (error) {
