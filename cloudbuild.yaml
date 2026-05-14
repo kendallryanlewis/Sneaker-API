@@ -1,3 +1,8 @@
+# Default substitution values — override per trigger in the GCP Console.
+substitutions:
+  _SERVICE_NAME: sneaker-api
+  _REGION: us-central1
+
 steps:
   # Deploy to Cloud Run using source-based deployment.
   # Cloud Build handles the Docker image build and Artifact Registry push automatically.
@@ -6,11 +11,11 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'sneaker-api'
+      - '${_SERVICE_NAME}'
       - '--source'
       - '.'
       - '--region'
-      - 'us-central1'
+      - '${_REGION}'
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
